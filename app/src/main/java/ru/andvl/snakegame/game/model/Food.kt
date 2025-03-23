@@ -6,6 +6,8 @@ package ru.andvl.snakegame.game.model
 enum class FoodType {
     REGULAR,      // Обычная еда
     DOUBLE_SCORE, // Удваивает очки на время
+    SPEED_UP,     // Увеличивает скорость змейки
+    SLOW_DOWN,    // Уменьшает скорость змейки
     SPEED_BOOST   // Временно увеличивает скорость
 }
 

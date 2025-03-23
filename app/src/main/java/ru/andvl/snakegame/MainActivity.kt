@@ -20,8 +20,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Получаем фабрику сторов из Application
+        val storeFactory = (application as SnakeApplication).storeFactory
+        
         val rootComponent = RootComponent(
             componentContext = defaultComponentContext(),
+            storeFactory = storeFactory,
             context = this
         )
         

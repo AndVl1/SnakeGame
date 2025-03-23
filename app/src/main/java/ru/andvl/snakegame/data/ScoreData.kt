@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -32,6 +33,20 @@ class ScoreRepository(private val context: Context) {
         val scoresJson = preferences[SCORES_KEY] ?: "[]"
         try {
             json.decodeFromString<List<PlayerScore>>(scoresJson)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    // Получить топ результатов
+    suspend fun getTopScores(): List<PlayerScore> {
+        val preferences = context.dataStore.data.first()
+        val scoresJson = preferences[SCORES_KEY] ?: "[]"
+        
+        return try {
+            json.decodeFromString<List<PlayerScore>>(scoresJson)
+                .sortedByDescending { it.score }
+                .take(10)
         } catch (e: Exception) {
             emptyList()
         }

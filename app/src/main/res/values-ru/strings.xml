@@ -26,6 +26,8 @@
     <string name="food_regular">Обычная</string>
     <string name="food_double_score">× 2 очки</string>
     <string name="food_slow_down">Замедление</string>
+    <string name="food_speed_up">Ускорение</string>
+    <string name="food_speed_boost">Рывок</string>
     
     <!-- Диалог инструкций -->
     <string name="instruction_swipe">Управляйте змейкой, свайпая в любом направлении</string>
@@ -33,7 +35,9 @@
     <string name="instruction_food_intro">Собирайте еду для увеличения счета:</string>
     <string name="instruction_food_regular">• Красная - обычная еда (+1 очко)</string>
     <string name="instruction_food_double_score">• Золотая - двойные очки на 5 секунд</string>
-    <string name="instruction_food_slow_down">• Зеленая - временное замедление с возвратом к прежней скорости</string>
+    <string name="instruction_food_slow_down">• Фиолетовая - временное замедление</string>
+    <string name="instruction_food_speed_up">• Голубая - постоянное увеличение скорости</string>
+    <string name="instruction_food_speed_boost">• Зеленая - временное ускорение</string>
     <string name="instruction_avoid">Избегайте препятствий и не сталкивайтесь с самим собой</string>
     
     <!-- Диалог сохранения счета -->
@@ -76,4 +80,14 @@
     <string name="language_settings">Настройки языка</string>
     <string name="change_language">Изменить язык</string>
     <string name="system_language">Системный язык</string>
+    
+    <!-- Экран таблицы рекордов -->
+    <string name="leaderboard_title">Таблица рекордов</string>
+    <string name="no_records">Пока нет рекордов</string>
+    <string name="no_records_hint">Сыграйте, чтобы установить первый рекорд!</string>
+    <string name="player_column">Игрок</string>
+    <string name="score_column">Очки</string>
+    <string name="speed_column">Скорость</string>
+    <string name="play_button">Играть</string>
+    <string name="settings_button">Настройки</string>
 </resources> 

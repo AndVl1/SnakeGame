@@ -17,8 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import ru.andvl.snakegame.R
 
 /**
  * Экран настроек
@@ -43,12 +45,12 @@ fun SettingsScreen(
             IconButton(onClick = onBackClicked) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Назад"
+                    contentDescription = stringResource(R.string.back)
                 )
             }
             
             Text(
-                text = "Настройки",
+                text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 8.dp)
@@ -73,11 +75,11 @@ fun SettingsScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Темная тема",
+                            text = stringResource(R.string.dark_theme),
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = "Включить темный режим для приложения",
+                            text = stringResource(R.string.dark_theme_description),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -19,9 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ru.andvl.snakegame.R
 import ru.andvl.snakegame.data.PlayerScore
 
 /**
@@ -42,7 +44,7 @@ fun LeaderboardScreen(
     ) {
         // Заголовок
         Text(
-            text = "Таблица рекордов",
+            text = stringResource(R.string.leaderboard_title),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth(),
@@ -63,12 +65,12 @@ fun LeaderboardScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Пока нет рекордов",
+                        text = stringResource(R.string.no_records),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "Сыграйте, чтобы установить первый рекорд!",
+                        text = stringResource(R.string.no_records_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -84,20 +86,20 @@ fun LeaderboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Игрок",
+                            text = stringResource(R.string.player_column),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(2f)
                         )
                         Text(
-                            text = "Очки",
+                            text = stringResource(R.string.score_column),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f),
                             textAlign = TextAlign.End
                         )
                         Text(
-                            text = "Скорость",
+                            text = stringResource(R.string.speed_column),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f),
@@ -156,9 +158,9 @@ fun LeaderboardScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Play"
+                        contentDescription = null
                     )
-                    Text(text = "Играть")
+                    Text(text = stringResource(R.string.play_button))
                 }
             }
             
@@ -174,9 +176,9 @@ fun LeaderboardScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings"
+                        contentDescription = null
                     )
-                    Text(text = "Настройки")
+                    Text(text = stringResource(R.string.settings_button))
                 }
             }
         }

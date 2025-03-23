@@ -2,15 +2,22 @@ package ru.andvl.snakegame.decompose.settings
 
 import android.content.Context
 import com.arkivanov.decompose.ComponentContext
-import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
+import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.arkivanov.mvikotlin.core.instancekeeper.getStore
+import com.arkivanov.mvikotlin.core.store.StoreFactory
+import com.arkivanov.mvikotlin.extensions.coroutines.labels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import ru.andvl.snakegame.data.SettingsRepository
+import ru.andvl.snakegame.decompose.settings.store.SettingsIntent
+import ru.andvl.snakegame.decompose.settings.store.SettingsLabel
+import ru.andvl.snakegame.decompose.settings.store.SettingsStoreFactory
+import ru.andvl.snakegame.utils.asValue
 
 /**
  * Компонент для экрана настроек
@@ -18,59 +25,70 @@ import ru.andvl.snakegame.data.SettingsRepository
 class SettingsComponent(
     componentContext: ComponentContext,
     private val settingsRepository: SettingsRepository,
+    private val storeFactory: StoreFactory,
     private val onNavigateBack: () -> Unit,
     private val context: Context
 ) : ComponentContext by componentContext {
 
-    private val scope = CoroutineScope(Dispatchers.Main.immediate)
-    
-    private val _state = MutableValue(State())
-    val state: Value<State> = _state
-    
-    init {
-        observeSettings()
+    private val store = instanceKeeper.getStore {
+        SettingsStoreFactory(
+            storeFactory = storeFactory,
+            settingsRepository = settingsRepository,
+            context = context
+        ).create()
     }
     
-    private fun observeSettings() {
-        settingsRepository.settings
-            .onEach { gameSettings ->
-                _state.value = State(
-                    isDarkTheme = gameSettings.isDarkTheme,
-                    appLocale = gameSettings.appLocale
-                )
+    // Используем SupervisorJob для устойчивости к ошибкам в корутинах
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    
+    val state: Value<State> = store.asValue({ storeState ->
+        State(
+            isDarkTheme = storeState.isDarkTheme,
+            appLocale = storeState.appLocale,
+            isLoading = storeState.isLoading,
+            error = storeState.error
+        )
+    }, lifecycle)
+    
+    init {
+        // Загружаем настройки при инициализации
+        store.accept(SettingsIntent.LoadSettings)
+        
+        // Обрабатываем события из стора
+        val labelsJob = store.labels
+            .onEach { label ->
+                when (label) {
+                    is SettingsLabel.NavigateBack -> onNavigateBack()
+                    is SettingsLabel.ShowMessage -> {
+                        // Можно показать Toast или Snackbar
+                    }
+                }
             }
             .launchIn(scope)
+            
+        // Отменяем корутины при уничтожении компонента
+        lifecycle.doOnDestroy {
+            labelsJob.cancel()
+            scope.cancel()
+        }
     }
     
     fun onBackClicked() {
-        onNavigateBack()
+        store.accept(SettingsIntent.ClickBack)
     }
     
     fun onThemeToggled() {
-        scope.launch {
-            val currentSettings = settingsRepository.settings.first()
-            
-            // Создаем объект GameSettings из текущих настроек
-            val updatedGameSettings = currentSettings.copy(
-                isDarkTheme = !currentSettings.isDarkTheme  // Инвертируем текущее состояние темы
-            )
-            
-            settingsRepository.updateSettings(updatedGameSettings)
-        }
+        store.accept(SettingsIntent.ToggleTheme)
     }
     
     fun onAppLocaleSelected(localeCode: String) {
-        scope.launch {
-            // Сохраняем выбранную локаль в настройках
-            settingsRepository.updateAppLocale(localeCode)
-            
-            // Предупреждаем пользователя, что для применения локали нужен перезапуск
-            // (Это можно реализовать через Toast или другие UI-элементы)
-        }
+        store.accept(SettingsIntent.SelectLocale(localeCode))
     }
     
     data class State(
         val isDarkTheme: Boolean = false,
-        val appLocale: String = ""
+        val appLocale: String = "",
+        val isLoading: Boolean = false,
+        val error: String? = null
     )
 } 

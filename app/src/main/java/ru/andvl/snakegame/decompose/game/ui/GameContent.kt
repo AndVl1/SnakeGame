@@ -103,7 +103,7 @@ fun GameContent(
         FoodLegend(modifier = Modifier.fillMaxWidth())
         
         // Игровое поле
-        val displayFood = GameModelConverter.convertFoodToDisplayGameFood(state.food)
+        val displayFood = state.food?.let { GameModelConverter.convertFoodToDisplayGameFood(it) }
         
         GameBoard(
             snakeParts = GameModelConverter.convertGridPositionsToSnakeParts(state.snakeParts),

@@ -3,6 +3,7 @@ package ru.andvl.snakegame.game.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,30 +28,55 @@ fun FoodLegend(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.padding(vertical = 8.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Обычная еда
-            FoodLegendItem(
-                color = Color.Red,
-                label = stringResource(R.string.food_regular)
-            )
+            // Верхний ряд
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Обычная еда
+                FoodLegendItem(
+                    color = Color.Red,
+                    label = stringResource(R.string.food_regular)
+                )
+                
+                // Двойные очки
+                FoodLegendItem(
+                    color = Color(0xFFFFD700), // Золотой
+                    label = stringResource(R.string.food_double_score)
+                )
+                
+                // Ускорение
+                FoodLegendItem(
+                    color = Color.Green,
+                    label = stringResource(R.string.food_speed_boost)
+                )
+            }
             
-            // Двойные очки
-            FoodLegendItem(
-                color = Color(0xFFFFD700), // Золотой
-                label = stringResource(R.string.food_double_score)
-            )
-            
-            // Ускорение
-            FoodLegendItem(
-                color = Color.Green,
-                label = stringResource(R.string.food_slow_down)
-            )
+            // Нижний ряд
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Постоянное ускорение
+                FoodLegendItem(
+                    color = Color(0xFF00FFFF), // Голубой
+                    label = stringResource(R.string.food_speed_up)
+                )
+                
+                // Замедление
+                FoodLegendItem(
+                    color = Color(0xFFFF00FF), // Фиолетовый
+                    label = stringResource(R.string.food_slow_down)
+                )
+            }
         }
     }
 }

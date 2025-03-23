@@ -35,6 +35,8 @@ fun AnimatedFood(
         FoodType.REGULAR -> Color.Red
         FoodType.SPEED_BOOST -> Color.Green
         FoodType.DOUBLE_SCORE -> Color(0xFFFFD700) // Золотой
+        FoodType.SPEED_UP -> Color(0xFF00FFFF) // Голубой
+        FoodType.SLOW_DOWN -> Color(0xFFFF00FF) // Фиолетовый
     }
     
     // Создаем анимации для разных типов еды
@@ -55,7 +57,7 @@ fun AnimatedFood(
     }
     
     // Анимация для ускорения (вращение)
-    val rotation = if (food.type == FoodType.SPEED_BOOST) {
+    val rotation = if (food.type == FoodType.SPEED_BOOST || food.type == FoodType.SPEED_UP) {
         infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = 360f,
@@ -75,6 +77,20 @@ fun AnimatedFood(
             targetValue = 1.0f,
             animationSpec = infiniteRepeatable(
                 animation = tween(500, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        ).value
+    } else {
+        1.0f
+    }
+    
+    // Анимация для замедления (пульсация медленная)
+    val slowScale = if (food.type == FoodType.SLOW_DOWN) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.9f,
+            targetValue = 1.1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1500, easing = FastOutSlowInEasing),
                 repeatMode = RepeatMode.Reverse
             )
         ).value
@@ -115,7 +131,7 @@ fun AnimatedFood(
                     radius = foodSize * scale
                 )
             }
-            FoodType.SPEED_BOOST -> {
+            FoodType.SPEED_BOOST, FoodType.SPEED_UP -> {
                 // Вращаем Canvas вокруг центра еды
                 rotate(rotation, Offset(x, y)) {
                     // Рисуем белую обводку для квадрата
@@ -139,6 +155,21 @@ fun AnimatedFood(
                 
                 // Рисуем ромб основного цвета с анимацией прозрачности
                 drawDiamond(x, y, foodSize * 2f, foodColor.copy(alpha = alpha))
+            }
+            FoodType.SLOW_DOWN -> {
+                // Рисуем шестиугольник с анимацией медленной пульсации
+                drawCircle(
+                    color = Color.White,
+                    center = Offset(x, y),
+                    radius = foodSize * 1.1f * slowScale
+                )
+                
+                // Рисуем шестиугольник основного цвета
+                drawCircle(
+                    color = foodColor,
+                    center = Offset(x, y),
+                    radius = foodSize * slowScale
+                )
             }
         }
     }

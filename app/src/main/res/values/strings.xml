@@ -26,6 +26,8 @@
     <string name="food_regular">Regular</string>
     <string name="food_double_score">× 2 Points</string>
     <string name="food_slow_down">Slowdown</string>
+    <string name="food_speed_up">Speed Up</string>
+    <string name="food_speed_boost">Boost</string>
     
     <!-- Instructions dialog -->
     <string name="instruction_swipe">Control the snake by swiping in any direction</string>
@@ -33,7 +35,9 @@
     <string name="instruction_food_intro">Collect food to increase your score:</string>
     <string name="instruction_food_regular">• Red - regular food (+1 point)</string>
     <string name="instruction_food_double_score">• Gold - double points for 5 seconds</string>
-    <string name="instruction_food_slow_down">• Green - temporary slowdown with return to previous speed</string>
+    <string name="instruction_food_slow_down">• Purple - temporary slowdown</string>
+    <string name="instruction_food_speed_up">• Blue - permanent speed increase</string>
+    <string name="instruction_food_speed_boost">• Green - temporary speed boost</string>
     <string name="instruction_avoid">Avoid obstacles and don\'t collide with yourself</string>
     
     <!-- Save score dialog -->
@@ -76,4 +80,14 @@
     <string name="language_settings">Language Settings</string>
     <string name="change_language">Change Language</string>
     <string name="system_language">System Language</string>
+    
+    <!-- Leaderboard screen -->
+    <string name="leaderboard_title">Leaderboard</string>
+    <string name="no_records">No records yet</string>
+    <string name="no_records_hint">Play to set your first record!</string>
+    <string name="player_column">Player</string>
+    <string name="score_column">Score</string>
+    <string name="speed_column">Speed</string>
+    <string name="play_button">Play</string>
+    <string name="settings_button">Settings</string>
 </resources>

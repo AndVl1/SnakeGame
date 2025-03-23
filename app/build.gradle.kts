@@ -75,8 +75,15 @@ dependencies {
     implementation(libs.mvikotlin)
     implementation(libs.mvikotlin.main)
     implementation(libs.mvikotlin.coroutines)
+    implementation(libs.mvikotlin.logging)
+    implementation(libs.mvikotlin.timetravel)
     
+    // Тестирование
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlin.reflect)
+    
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

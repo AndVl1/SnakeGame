@@ -8,6 +8,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.mvikotlin.core.store.StoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,7 @@ import ru.andvl.snakegame.game.model.GameSettings
  */
 class RootComponent(
     componentContext: ComponentContext,
+    private val storeFactory: StoreFactory,
     private val context: Context
 ) : ComponentContext by componentContext {
 
@@ -72,6 +74,7 @@ class RootComponent(
                 component = LeaderboardComponent(
                     componentContext = componentContext,
                     scoreRepository = scoreRepository,
+                    storeFactory = storeFactory,
                     onStartGameClick = { navigation.push(Config.Game) },
                     onSettingsClick = { navigation.push(Config.Settings) }
                 )
@@ -79,11 +82,27 @@ class RootComponent(
             is Config.Game -> Child.Game(
                 component = GameComponent(
                     componentContext = componentContext,
+                    storeFactory = storeFactory,
                     onNavigateToLeaderboard = { score, speedFactor, playerName ->
                         if (playerName != null) {
                             saveScore(playerName, score, speedFactor)
                         }
+                        
+                        // Переходим на экран лидерборда
                         navigation.navigate { stack -> listOf(Config.Leaderboard) }
+                        
+                        // Находим активный компонент лидерборда и обновляем его данные
+                        scope.launch {
+                            // Даем время на переход на экран лидерборда
+                            kotlinx.coroutines.delay(100)
+                            
+                            // Получаем текущий активный экран
+                            val currentChild = childStack.value.active.instance
+                            if (currentChild is Child.Leaderboard) {
+                                // Обновляем данные лидерборда
+                                currentChild.component.refreshLeaderboard()
+                            }
+                        }
                     },
                     onBack = { navigation.pop() }
                 )
@@ -92,6 +111,7 @@ class RootComponent(
                 component = SettingsComponent(
                     componentContext = componentContext,
                     settingsRepository = settingsRepository,
+                    storeFactory = storeFactory,
                     onNavigateBack = { navigation.pop() },
                     context = context
                 )

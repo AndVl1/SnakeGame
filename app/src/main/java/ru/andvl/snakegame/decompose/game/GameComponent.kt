@@ -3,130 +3,109 @@ package ru.andvl.snakegame.decompose.game
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
+import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.arkivanov.mvikotlin.core.instancekeeper.getStore
+import com.arkivanov.mvikotlin.core.store.StoreFactory
+import com.arkivanov.mvikotlin.extensions.coroutines.labels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import ru.andvl.snakegame.decompose.game.store.GameIntent
+import ru.andvl.snakegame.decompose.game.store.GameLabel
+import ru.andvl.snakegame.decompose.game.store.GameState
+import ru.andvl.snakegame.decompose.game.store.GameStoreFactory
+import ru.andvl.snakegame.extensions.asValue
 import ru.andvl.snakegame.game.model.Direction
-import ru.andvl.snakegame.game.model.Food
-import ru.andvl.snakegame.game.model.FoodType
-import ru.andvl.snakegame.game.model.GameState
-import ru.andvl.snakegame.game.model.GridPosition
-import ru.andvl.snakegame.game.model.Obstacle
 
 /**
- * Компонент для игрового экрана
+ * Компонент для игрового экрана с использованием MVIKotlin
  */
 class GameComponent(
     componentContext: ComponentContext,
+    private val storeFactory: StoreFactory,
     private val onNavigateToLeaderboard: (score: Int, speedFactor: Float, playerName: String?) -> Unit,
     private val onBack: () -> Unit
 ) : ComponentContext by componentContext {
 
-    private val scope = CoroutineScope(Dispatchers.Main)
+    // Используем SupervisorJob для устойчивости к ошибкам в корутинах
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     
-    private val _state = MutableValue(State())
-    val state: Value<State> = _state
+    // Создаем и сохраняем store в instanceKeeper
+    private val store = instanceKeeper.getStore {
+        GameStoreFactory(storeFactory).create()
+    }
     
-    // Для сохранения логики из оригинального ViewModel создадим GameEngine
-    private val gameEngine = GameEngine(
-        onStateChanged = { gameState ->
-            _state.value = _state.value.copy(gameState = gameState)
-        },
-        onUiStateChanged = { uiState ->
-            // Конвертация SnakePart в GridPosition
-            val snakeParts = uiState.snakeParts.map { snakePart ->
-                GridPosition(snakePart.x, snakePart.y)
-            }
-            
-            _state.value = _state.value.copy(
-                snakeParts = snakeParts,
-                food = uiState.food,
-                obstacles = uiState.obstacles,
-                score = uiState.score,
-                speedFactor = uiState.speedFactor,
-                doubleScoreActive = uiState.doubleScoreActive,
-                pulsatingSpeedActive = uiState.pulsatingSpeedActive,
-                deathAnimationActive = uiState.deathAnimationActive,
-                showInstructions = uiState.showInstructions
-            )
-        }
-    )
+    // Экспонируем state как Value для Decompose с привязкой к lifecycle
+    val state: Value<GameState> = store.asValue(lifecycle)
     
-    // Флаг для отслеживания диалога сохранения счета
-    private var saveScoreDialogHandled = false
+    // Флаг для отображения диалога сохранения счета
     private val _showSaveScoreDialog = MutableValue(false)
     val showSaveScoreDialog: Value<Boolean> = _showSaveScoreDialog
     
-    private var playerName = MutableStateFlow<String?>(null)
-    val playerNameFlow = playerName.asStateFlow()
-    
     init {
-        // Инициализация компонента
-        gameEngine.initialize()
+        // Слушаем лейблы из стора
+        val labelsJob = store.labels
+            .onEach { label ->
+                when (label) {
+                    is GameLabel.NavigateToLeaderboard -> onNavigateToLeaderboard(
+                        label.score,
+                        label.speedFactor,
+                        label.playerName
+                    )
+                    is GameLabel.NavigateBack -> onBack()
+                    is GameLabel.ShowSaveScoreDialog -> _showSaveScoreDialog.value = true
+                    is GameLabel.ShowMessage -> { /* Реализация показа сообщения */ }
+                }
+            }
+            .launchIn(scope)
+            
+        // Отменяем корутины при уничтожении компонента
+        lifecycle.doOnDestroy {
+            labelsJob.cancel()
+            scope.cancel()
+        }
     }
     
+    // Методы для взаимодействия с игрой
+    
     fun onDirectionChange(direction: Direction) {
-        gameEngine.changeDirection(direction)
+        store.accept(GameIntent.ChangeDirection(direction))
     }
     
     fun onPlayPauseClick() {
-        when (_state.value.gameState) {
-            GameState.Running -> gameEngine.pauseGame()
-            GameState.Paused -> gameEngine.resumeGame()
-            GameState.GameOver -> gameEngine.resetGame()
-        }
+        store.accept(GameIntent.PlayPause)
     }
     
     fun onRestartClick() {
-        gameEngine.resetGame()
+        store.accept(GameIntent.Restart)
     }
     
     fun onShowInstructionsClick() {
-        gameEngine.showInstructions()
+        store.accept(GameIntent.ShowInstructions)
     }
     
     fun onDismissInstructions() {
-        gameEngine.dismissInstructions()
+        store.accept(GameIntent.DismissInstructions)
     }
     
-    fun onBackPressed() {
-        // Остановить игру и вызвать onBack
-        gameEngine.pauseGame()
-        onBack()
-    }
-    
-    fun onSaveScore(name: String) {
+    fun onSaveScore(playerName: String) {
+        store.accept(GameIntent.SaveScore(playerName))
         _showSaveScoreDialog.value = false
-        playerName.value = name
-        onNavigateToLeaderboard(_state.value.score, _state.value.speedFactor, name)
     }
     
     fun onDismissSaveScore() {
+        store.accept(GameIntent.DismissSaveScore)
         _showSaveScoreDialog.value = false
-        onNavigateToLeaderboard(_state.value.score, _state.value.speedFactor, null)
     }
     
-    // Обработка завершения игры
+    fun onBackPressed() {
+        store.accept(GameIntent.BackPressed)
+    }
+    
     fun handleGameOver() {
-        if (_state.value.gameState == GameState.GameOver && 
-            !_state.value.deathAnimationActive && 
-            !saveScoreDialogHandled) {
-            saveScoreDialogHandled = true
-            _showSaveScoreDialog.value = true
-        }
+        store.accept(GameIntent.HandleGameOver)
     }
-    
-    data class State(
-        val snakeParts: List<GridPosition> = emptyList(),
-        val food: Food = Food(GridPosition(0, 0), FoodType.REGULAR),
-        val obstacles: List<Obstacle> = emptyList(),
-        val score: Int = 0,
-        val speedFactor: Float = 1.0f,
-        val doubleScoreActive: Boolean = false,
-        val pulsatingSpeedActive: Boolean = false,
-        val deathAnimationActive: Boolean = false,
-        val showInstructions: Boolean = false,
-        val gameState: GameState = GameState.Paused
-    )
 } 

@@ -27,14 +27,15 @@ import ru.andvl.snakegame.game.FoodType
 import ru.andvl.snakegame.game.Obstacle
 import ru.andvl.snakegame.game.SnakePart
 import ru.andvl.snakegame.game.model.DisplayGameFood
+import ru.andvl.snakegame.game.model.GameConstants
 import ru.andvl.snakegame.game.model.GameModelConverter
 import ru.andvl.snakegame.game.model.GridPosition
 import kotlin.math.abs
 import ru.andvl.snakegame.game.model.Food as NewFood
 import ru.andvl.snakegame.game.model.FoodType as NewFoodType
 
-// Константа для размера сетки (по умолчанию)
-const val GRID_SIZE = 16
+// Константа для размера сетки из единого источника
+const val GRID_SIZE = GameConstants.BOARD_SIZE
 
 /**
  * Компонент игрового поля
@@ -42,13 +43,13 @@ const val GRID_SIZE = 16
 @Composable
 fun GameBoard(
     snakeParts: List<SnakePart>,
-    food: DisplayGameFood,
+    food: DisplayGameFood?,
     obstacles: List<Obstacle>,
     isGameOver: Boolean,
     doubleScoreActive: Boolean,
     pulsatingSpeedActive: Boolean,
     modifier: Modifier = Modifier,
-    boardSize: Int = GRID_SIZE, // Используем константу по умолчанию
+    boardSize: Int = GRID_SIZE, // Используем константу из единого источника
     onDirectionChange: (Direction) -> Unit,
 ) {
     // Анимация пульсации для смерти
@@ -172,59 +173,79 @@ fun GameBoard(
             
             // ПОЛНОСТЬЮ ПЕРЕДЕЛЫВАЕМ ОТРИСОВКУ ЕДЫ
             // Получаем логические координаты из еды на основе точного размера ячейки
-            val gridX = (food.position.x / GameModelConverter.CELL_SIZE).toInt()
-            val gridY = (food.position.y / GameModelConverter.CELL_SIZE).toInt()
-            
-            // Вычисляем центр ячейки в пикселях Canvas
-            val foodCenterX = (gridX + 0.5f) * pixelCellSize
-            val foodCenterY = (gridY + 0.5f) * pixelCellSize
-            
-            // Определяем цвет на основе типа еды
-            val foodColor = when (food.type) {
-                FoodType.REGULAR -> Color.Red
-                FoodType.SPEED_UP -> Color.Green
-                FoodType.DOUBLE_SCORE -> Color(0xFFFFD700) // Золотой
-                else -> Color.Red
+            food?.let { safeFood ->
+                // Преобразуем пиксельные координаты в координаты сетки
+                val gridX = (safeFood.position.x / GameModelConverter.CELL_SIZE).toInt()
+                val gridY = (safeFood.position.y / GameModelConverter.CELL_SIZE).toInt()
+                
+                // Используем нормализованные координаты для учета того же размера сетки, как в GameEngine
+                val normalizedX = gridX % boardSize
+                val normalizedY = gridY % boardSize
+                
+                // Вычисляем центр ячейки в пикселях Canvas
+                val centerX = (normalizedX + 0.5f) * pixelCellSize
+                val centerY = (normalizedY + 0.5f) * pixelCellSize
+                
+                // Отладочный вывод для координат еды
+                println("DEBUG: Отрисовка еды - пиксельные: (${safeFood.position.x}, ${safeFood.position.y}), сетка: ($gridX, $gridY), нормализованные: ($normalizedX, $normalizedY), центр: ($centerX, $centerY)")
+                
+                // Определяем радиус еды (чуть меньше половины ячейки)
+                val radius = pixelCellSize * 0.4f
+                
+                // Определяем цвет на основе типа еды
+                val foodColor = when (safeFood.type) {
+                    FoodType.REGULAR -> Color.Red
+                    FoodType.SPEED_UP -> Color.Green
+                    FoodType.DOUBLE_SCORE -> Color(0xFFFFD700) // Gold
+                    FoodType.SLOW_DOWN -> Color.Blue
+                }
+                
+                // Рисуем еду как круг
+                drawCircle(
+                    color = foodColor,
+                    radius = radius,
+                    center = Offset(centerX, centerY)
+                )
             }
-            
-            // Рисуем базовый круг еды в центре ячейки сетки
-            drawCircle(
-                color = foodColor,
-                radius = pixelCellSize * 0.4f,
-                center = Offset(foodCenterX, foodCenterY)
-            )
         }
         
         // Расчет размера ячейки для анимированной еды
         val pixelCellSize = savedCanvasWidth / boardSize
         
-        // Получаем логические координаты еды для анимации
-        val gridX = (food.position.x / GameModelConverter.CELL_SIZE).toInt()
-        val gridY = (food.position.y / GameModelConverter.CELL_SIZE).toInt()
-        
-        // ИСПРАВЛЯЕМ ЛОГИКУ ДЛЯ АНИМИРОВАННОЙ ЕДЫ
-        // Создаем точку для анимации с корректными координатами сетки
-        val foodObj = NewFood(
-            position = GridPosition(
-                x = gridX,
-                y = gridY
-            ),
-            type = when(food.type) {
-                FoodType.REGULAR -> NewFoodType.REGULAR
-                FoodType.DOUBLE_SCORE -> NewFoodType.DOUBLE_SCORE
-                FoodType.SPEED_UP -> NewFoodType.SPEED_BOOST
-                else -> NewFoodType.REGULAR
-            }
-        )
-        
-        // Создаем IntSize для доски
-        val boardSizeForAnimatedFood = IntSize(boardSize, boardSize)
-        
-        // Показываем анимированную еду
-        AnimatedFood(
-            food = foodObj,
-            boardSize = boardSizeForAnimatedFood,
-            modifier = Modifier.fillMaxSize()
-        )
+        // Анимируем еду в зависимости от типа
+        food?.let { safeFood ->
+            // Получаем логические координаты еды для анимации
+            val gridX = (safeFood.position.x / GameModelConverter.CELL_SIZE).toInt()
+            val gridY = (safeFood.position.y / GameModelConverter.CELL_SIZE).toInt()
+            
+            // Нормализуем координаты для согласованности с GameEngine
+            val normalizedX = gridX % boardSize
+            val normalizedY = gridY % boardSize
+            
+            // ИСПРАВЛЯЕМ ЛОГИКУ ДЛЯ АНИМИРОВАННОЙ ЕДЫ
+            // Теперь данные для анимаций берутся из модели Food под капотом
+            val foodObj = NewFood(
+                position = GridPosition(
+                    x = normalizedX,
+                    y = normalizedY
+                ),
+                type = when(safeFood.type) {
+                    FoodType.REGULAR -> NewFoodType.REGULAR
+                    FoodType.DOUBLE_SCORE -> NewFoodType.DOUBLE_SCORE
+                    FoodType.SPEED_UP -> NewFoodType.SPEED_UP
+                    FoodType.SLOW_DOWN -> NewFoodType.SLOW_DOWN
+                }
+            )
+            
+            // Создаем IntSize для доски
+            val boardSizeIntSize = IntSize(boardSize, boardSize)
+            
+            // Показываем анимированную еду
+            AnimatedFood(
+                food = foodObj,
+                boardSize = boardSizeIntSize,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 } 

@@ -18,9 +18,9 @@ fun LeaderboardContent(
     val state by component.state.subscribeAsState()
     
     LeaderboardScreen(
-        scores = state.scores,
-        onStartGameClick = { component.onStartGameClicked() },
-        onSettingsClick = { component.onSettingsClicked() },
+        scores = state.topScores,
+        onStartGameClick = { component.onStartGameClick() },
+        onSettingsClick = { component.onSettingsClick() },
         modifier = modifier
     )
 } 

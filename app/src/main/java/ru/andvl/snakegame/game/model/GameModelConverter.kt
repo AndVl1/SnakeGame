@@ -24,7 +24,7 @@ data class DisplayGameFood(
 object GameModelConverter {
 
     // ФИКСИРОВАННЫЙ размер ячейки для всех расчетов координат
-    const val CELL_SIZE = 32f
+    const val CELL_SIZE = GameConstants.CELL_SIZE
 
     /**
      * Конвертирует Direction из старого формата в новый
@@ -57,8 +57,8 @@ object GameModelConverter {
         return when (foodType) {
             OldFoodType.REGULAR -> NewFoodType.REGULAR
             OldFoodType.DOUBLE_SCORE -> NewFoodType.DOUBLE_SCORE
-            OldFoodType.SPEED_UP -> NewFoodType.SPEED_BOOST
-            OldFoodType.SLOW_DOWN -> NewFoodType.SPEED_BOOST // В новом формате нет SLOW_DOWN, используем SPEED_BOOST
+            OldFoodType.SPEED_UP -> NewFoodType.SPEED_UP
+            OldFoodType.SLOW_DOWN -> NewFoodType.SLOW_DOWN
         }
     }
 
@@ -69,6 +69,8 @@ object GameModelConverter {
         return when (foodType) {
             NewFoodType.REGULAR -> OldFoodType.REGULAR
             NewFoodType.DOUBLE_SCORE -> OldFoodType.DOUBLE_SCORE
+            NewFoodType.SPEED_UP -> OldFoodType.SPEED_UP
+            NewFoodType.SLOW_DOWN -> OldFoodType.SLOW_DOWN
             NewFoodType.SPEED_BOOST -> OldFoodType.SPEED_UP
         }
     }
