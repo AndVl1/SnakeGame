@@ -15,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import ru.andvl.sample.R
 
 /**
  * Легенда для объяснения различных типов еды
@@ -35,19 +37,19 @@ fun FoodLegend(modifier: Modifier = Modifier) {
             // Обычная еда
             FoodLegendItem(
                 color = Color.Red,
-                label = "Обычная"
+                label = stringResource(R.string.food_regular)
             )
             
             // Двойные очки
             FoodLegendItem(
                 color = Color(0xFFFFD700), // Золотой
-                label = "× 2 очки"
+                label = stringResource(R.string.food_double_score)
             )
             
             // Ускорение
             FoodLegendItem(
                 color = Color.Green,
-                label = "Замедление"
+                label = stringResource(R.string.food_slow_down)
             )
         }
     }

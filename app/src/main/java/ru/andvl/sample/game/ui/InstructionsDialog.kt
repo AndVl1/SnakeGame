@@ -11,9 +11,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ru.andvl.sample.R
 
 /**
  * Диалог с инструкциями по игре
@@ -26,7 +28,7 @@ fun GameInstructionsDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Как играть",
+                text = stringResource(R.string.how_to_play_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -37,22 +39,22 @@ fun GameInstructionsDialog(
             Column(
                 modifier = Modifier.padding(8.dp)
             ) {
-                InstructionItem(text = "Управляйте змейкой, свайпая в любом направлении")
+                InstructionItem(text = stringResource(R.string.instruction_swipe))
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                InstructionItem(text = "Проходите через стены, чтобы появиться с другой стороны")
+                InstructionItem(text = stringResource(R.string.instruction_walls))
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                InstructionItem(text = "Собирайте еду для увеличения счета:")
-                InstructionItem(text = "• Красная - обычная еда (+1 очко)")
-                InstructionItem(text = "• Золотая - двойные очки на 5 секунд")
-                InstructionItem(text = "• Зеленая - временное замедление с возвратом к прежней скорости")
+                InstructionItem(text = stringResource(R.string.instruction_food_intro))
+                InstructionItem(text = stringResource(R.string.instruction_food_regular))
+                InstructionItem(text = stringResource(R.string.instruction_food_double_score))
+                InstructionItem(text = stringResource(R.string.instruction_food_slow_down))
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                InstructionItem(text = "Избегайте препятствий и не сталкивайтесь с самим собой")
+                InstructionItem(text = stringResource(R.string.instruction_avoid))
             }
         },
         confirmButton = {
@@ -60,7 +62,7 @@ fun GameInstructionsDialog(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Начать игру!")
+                Text(stringResource(R.string.start_game))
             }
         }
     )

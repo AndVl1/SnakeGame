@@ -53,6 +53,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     
+    // AppCompat
+    implementation(libs.androidx.appcompat)
+    
     // DataStore
     implementation(libs.androidx.datastore.preferences)
     

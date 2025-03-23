@@ -1,11 +1,15 @@
 package ru.andvl.sample.decompose.game.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,12 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
+import ru.andvl.sample.R
 import ru.andvl.sample.decompose.game.GameComponent
 import ru.andvl.sample.game.Obstacle
 import ru.andvl.sample.game.model.GameModelConverter
@@ -86,7 +86,7 @@ fun GameContent(
     ) {
         // Заголовок игры
         Text(
-            text = "Змейка",
+            text = stringResource(R.string.game_title),
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 8.dp),
             textAlign = TextAlign.Center
@@ -162,14 +162,14 @@ fun GameContent(
                     component.onPlayPauseClick()
                 }
             },
-            title = { Text("Выйти из игры?") },
-            text = { Text("Вы уверены, что хотите выйти? Текущий прогресс будет потерян.") },
+            title = { Text(stringResource(R.string.exit_confirmation_title)) },
+            text = { Text(stringResource(R.string.exit_confirmation_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showExitConfirmationDialog = false
                     component.onBackPressed()
                 }) {
-                    Text("Выйти")
+                    Text(stringResource(R.string.exit))
                 }
             },
             dismissButton = {
@@ -180,7 +180,7 @@ fun GameContent(
                         component.onPlayPauseClick()
                     }
                 }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

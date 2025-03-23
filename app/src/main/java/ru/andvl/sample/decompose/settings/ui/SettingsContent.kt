@@ -20,7 +20,7 @@ fun SettingsContent(
     SettingsScreen(
         isDarkTheme = state.isDarkTheme,
         onThemeToggled = { component.onThemeToggled() },
-        onNavigateBack = { component.onBackClicked() },
+        onBackClicked = { component.onBackClicked() },
         modifier = modifier
     )
 } 

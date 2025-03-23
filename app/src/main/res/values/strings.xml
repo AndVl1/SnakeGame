@@ -1,3 +1,79 @@
 <resources>
+    <!-- General strings -->
     <string name="app_name">Snake Game</string>
+    
+    <!-- Titles -->
+    <string name="game_title">Snake Game</string>
+    <string name="how_to_play_title">How to Play</string>
+    <string name="save_score_title">Save Score</string>
+    <string name="exit_confirmation_title">Exit Game?</string>
+
+    <!-- Buttons and actions -->
+    <string name="start_game">Start Game!</string>
+    <string name="resume_game">Resume</string>
+    <string name="pause_game">Pause</string>
+    <string name="restart_game">Restart</string>
+    <string name="instructions">Instructions</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="exit">Exit</string>
+
+    <!-- Game information -->
+    <string name="score">Score: %d</string>
+    <string name="speed">Speed: %.1f</string>
+    
+    <!-- Food types -->
+    <string name="food_regular">Regular</string>
+    <string name="food_double_score">× 2 Points</string>
+    <string name="food_slow_down">Slowdown</string>
+    
+    <!-- Instructions dialog -->
+    <string name="instruction_swipe">Control the snake by swiping in any direction</string>
+    <string name="instruction_walls">Pass through walls to appear on the opposite side</string>
+    <string name="instruction_food_intro">Collect food to increase your score:</string>
+    <string name="instruction_food_regular">• Red - regular food (+1 point)</string>
+    <string name="instruction_food_double_score">• Gold - double points for 5 seconds</string>
+    <string name="instruction_food_slow_down">• Green - temporary slowdown with return to previous speed</string>
+    <string name="instruction_avoid">Avoid obstacles and don\'t collide with yourself</string>
+    
+    <!-- Save score dialog -->
+    <string name="save_score_prompt">Enter your name:</string>
+    <string name="save_score_info">Score: %1$d, Speed: %2$.1f</string>
+    
+    <!-- Exit confirmation dialog -->
+    <string name="exit_confirmation_message">Are you sure you want to exit? Current progress will be lost.</string>
+
+    <!-- Information Panel -->
+    <string name="score_display">Score: %1$d</string>
+    <string name="speed_description">Speed</string>
+
+    <!-- Save Score Dialog -->
+    <string name="save_score_congratulations">Congratulations!</string>
+    <string name="save_score_result">Your score: %1$d points</string>
+    <string name="save_score_speed">Speed: %1$sx</string>
+    <string name="save_score_enter_name">Enter your name to save the result</string>
+    <string name="save_score_player_name">Player name</string>
+    <string name="save_score_name_empty_error">Name cannot be empty</string>
+    <string name="save_score_button">Save Result</string>
+
+    <!-- Movement directions -->
+    <string name="direction_up">Move up</string>
+    <string name="direction_down">Move down</string>
+    <string name="direction_left">Move left</string>
+    <string name="direction_right">Move right</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="back">Back</string>
+    <string name="dark_theme">Dark theme</string>
+    <string name="dark_theme_description">Enable dark mode for the app</string>
+    <string name="language_title">App language</string>
+    <string name="language_description">Change the language of the app interface</string>
+    
+    <!-- Settings screen additional strings -->
+    <string name="settings">Settings</string>
+    <string name="appearance">Appearance</string>
+    <string name="language_settings">Language Settings</string>
+    <string name="change_language">Change Language</string>
+    <string name="system_language">System Language</string>
 </resources>

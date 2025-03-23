@@ -2,7 +2,6 @@ package ru.andvl.sample.game.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,9 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ru.andvl.sample.R
 import ru.andvl.sample.game.model.GameState
 
 /**
@@ -52,7 +53,7 @@ fun GameActionControls(
         // Вспомогательная кнопка инструкций (только иконка)
         GameIconButton(
             icon = Icons.Default.Info,
-            contentDescription = "Показать инструкции",
+            contentDescription = stringResource(R.string.instructions),
             onClick = onShowInstructionsClick,
             modifier = Modifier
         )
@@ -64,9 +65,9 @@ fun GameActionControls(
                 else -> Icons.Default.PlayArrow
             },
             text = when (gameState) {
-                GameState.Running -> "Пауза"
-                GameState.Paused -> "Играть"
-                GameState.GameOver -> "Новая игра"
+                GameState.Running -> stringResource(R.string.pause_game)
+                GameState.Paused -> stringResource(R.string.resume_game)
+                GameState.GameOver -> stringResource(R.string.restart_game)
             },
             onClick = onPlayPauseClick,
             isPrimary = true,
@@ -76,7 +77,7 @@ fun GameActionControls(
         // Вспомогательная кнопка рестарта (только иконка)
         GameIconButton(
             icon = Icons.Default.Refresh,
-            contentDescription = "Перезапустить игру",
+            contentDescription = stringResource(R.string.restart_game),
             onClick = onRestartClick,
             modifier = Modifier
         )

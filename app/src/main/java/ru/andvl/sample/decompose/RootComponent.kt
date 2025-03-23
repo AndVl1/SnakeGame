@@ -3,19 +3,16 @@ package ru.andvl.sample.decompose
 import android.content.Context
 import android.os.Parcelable
 import com.arkivanov.decompose.ComponentContext
-import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
-import com.arkivanov.decompose.value.Value
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
-import kotlinx.serialization.Serializable
 import ru.andvl.sample.data.PlayerScore
 import ru.andvl.sample.data.ScoreRepository
 import ru.andvl.sample.data.SettingsRepository
@@ -95,7 +92,8 @@ class RootComponent(
                 component = SettingsComponent(
                     componentContext = componentContext,
                     settingsRepository = settingsRepository,
-                    onNavigateBack = { navigation.pop() }
+                    onNavigateBack = { navigation.pop() },
+                    context = context
                 )
             )
         }

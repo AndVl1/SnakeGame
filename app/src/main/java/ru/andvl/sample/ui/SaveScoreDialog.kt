@@ -18,10 +18,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import ru.andvl.sample.R
 
 @Composable
 fun SaveScoreDialog(
@@ -47,7 +49,7 @@ fun SaveScoreDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Поздравляем!",
+                    text = stringResource(R.string.save_score_congratulations),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -56,13 +58,13 @@ fun SaveScoreDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Ваш результат: $score очков",
+                    text = stringResource(R.string.save_score_result, score),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
                 
                 Text(
-                    text = "Скорость: ${String.format("%.1f", speedFactor)}x",
+                    text = stringResource(R.string.save_score_speed, String.format("%.1f", speedFactor)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.secondary
                 )
@@ -70,7 +72,7 @@ fun SaveScoreDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Введите ваше имя для сохранения результата",
+                    text = stringResource(R.string.save_score_enter_name),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
@@ -83,10 +85,10 @@ fun SaveScoreDialog(
                         playerName = it
                         isError = it.trim().isEmpty()
                     },
-                    label = { Text("Имя игрока") },
+                    label = { Text(stringResource(R.string.save_score_player_name)) },
                     isError = isError,
                     supportingText = if (isError) {
-                        { Text("Имя не может быть пустым") }
+                        { Text(stringResource(R.string.save_score_name_empty_error)) }
                     } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -103,7 +105,7 @@ fun SaveScoreDialog(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = "Сохранить результат")
+                    Text(text = stringResource(R.string.save_score_button))
                 }
             }
         }

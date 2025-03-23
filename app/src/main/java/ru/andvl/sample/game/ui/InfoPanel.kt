@@ -14,8 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import ru.andvl.sample.R
 import java.text.DecimalFormat
 
 /**
@@ -39,7 +41,7 @@ fun InfoPanel(
         ) {
             // Счет
             Text(
-                text = "Счет: $score",
+                text = stringResource(R.string.score_display, score),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -52,7 +54,7 @@ fun InfoPanel(
             ) {
                 Icon(
                     imageVector = Icons.Default.Speed,
-                    contentDescription = "Скорость",
+                    contentDescription = stringResource(R.string.speed_description),
                     tint = getSpeedColor(speedFactor)
                 )
                 

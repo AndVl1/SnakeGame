@@ -1,5 +1,6 @@
 package ru.andvl.sample.decompose.settings
 
+import android.content.Context
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
@@ -9,9 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import ru.andvl.sample.data.Settings
 import ru.andvl.sample.data.SettingsRepository
-import ru.andvl.sample.game.model.GameSettings
 
 /**
  * Компонент для экрана настроек
@@ -19,7 +18,8 @@ import ru.andvl.sample.game.model.GameSettings
 class SettingsComponent(
     componentContext: ComponentContext,
     private val settingsRepository: SettingsRepository,
-    private val onNavigateBack: () -> Unit
+    private val onNavigateBack: () -> Unit,
+    private val context: Context
 ) : ComponentContext by componentContext {
 
     private val scope = CoroutineScope(Dispatchers.Main.immediate)
@@ -35,7 +35,8 @@ class SettingsComponent(
         settingsRepository.settings
             .onEach { gameSettings ->
                 _state.value = State(
-                    isDarkTheme = gameSettings.isDarkTheme
+                    isDarkTheme = gameSettings.isDarkTheme,
+                    appLocale = gameSettings.appLocale
                 )
             }
             .launchIn(scope)
@@ -50,22 +51,26 @@ class SettingsComponent(
             val currentSettings = settingsRepository.settings.first()
             
             // Создаем объект GameSettings из текущих настроек
-            val updatedGameSettings = GameSettings(
-                difficulty = currentSettings.difficulty,
-                boardSize = currentSettings.boardSize,
-                isDarkTheme = !currentSettings.isDarkTheme,  // Инвертируем текущее состояние темы
-                vibrationsEnabled = currentSettings.vibrationsEnabled,
-                soundsEnabled = currentSettings.soundsEnabled,
-                initialSpeedFactor = currentSettings.initialSpeedFactor,
-                maxObstacles = currentSettings.maxObstacles,
-                specialFoodFrequency = currentSettings.specialFoodFrequency
+            val updatedGameSettings = currentSettings.copy(
+                isDarkTheme = !currentSettings.isDarkTheme  // Инвертируем текущее состояние темы
             )
             
             settingsRepository.updateSettings(updatedGameSettings)
         }
     }
     
+    fun onAppLocaleSelected(localeCode: String) {
+        scope.launch {
+            // Сохраняем выбранную локаль в настройках
+            settingsRepository.updateAppLocale(localeCode)
+            
+            // Предупреждаем пользователя, что для применения локали нужен перезапуск
+            // (Это можно реализовать через Toast или другие UI-элементы)
+        }
+    }
+    
     data class State(
-        val isDarkTheme: Boolean = false
+        val isDarkTheme: Boolean = false,
+        val appLocale: String = ""
     )
 } 

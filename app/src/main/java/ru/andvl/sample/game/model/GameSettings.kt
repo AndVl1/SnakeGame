@@ -3,6 +3,7 @@ package ru.andvl.sample.game.model
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.serialization.Serializable
 
 /**
@@ -32,7 +33,10 @@ data class GameSettings(
     val maxObstacles: Int = 5,
     
     // Частота появления специальной еды (1-10, где 10 - наиболее часто)
-    val specialFoodFrequency: Int = 5
+    val specialFoodFrequency: Int = 5,
+    
+    // Выбранный язык приложения ("" означает использование системного языка)
+    val appLocale: String = ""
 ) {
     companion object {
         // Ключи для DataStore
@@ -44,5 +48,6 @@ data class GameSettings(
         val INITIAL_SPEED_KEY = floatPreferencesKey("initial_speed")
         val MAX_OBSTACLES_KEY = intPreferencesKey("max_obstacles")
         val SPECIAL_FOOD_FREQUENCY_KEY = intPreferencesKey("special_food_frequency")
+        val APP_LOCALE_KEY = stringPreferencesKey("app_locale")
     }
 } 

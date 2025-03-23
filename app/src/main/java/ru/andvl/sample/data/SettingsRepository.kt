@@ -29,7 +29,8 @@ class SettingsRepository(private val context: Context) {
             soundsEnabled = preferences[GameSettings.SOUNDS_KEY] ?: GameSettings().soundsEnabled,
             initialSpeedFactor = preferences[GameSettings.INITIAL_SPEED_KEY] ?: GameSettings().initialSpeedFactor,
             maxObstacles = preferences[GameSettings.MAX_OBSTACLES_KEY] ?: GameSettings().maxObstacles,
-            specialFoodFrequency = preferences[GameSettings.SPECIAL_FOOD_FREQUENCY_KEY] ?: GameSettings().specialFoodFrequency
+            specialFoodFrequency = preferences[GameSettings.SPECIAL_FOOD_FREQUENCY_KEY] ?: GameSettings().specialFoodFrequency,
+            appLocale = preferences[GameSettings.APP_LOCALE_KEY] ?: GameSettings().appLocale
         )
     }
     
@@ -46,6 +47,7 @@ class SettingsRepository(private val context: Context) {
             preferences[GameSettings.INITIAL_SPEED_KEY] = gameSettings.initialSpeedFactor
             preferences[GameSettings.MAX_OBSTACLES_KEY] = gameSettings.maxObstacles
             preferences[GameSettings.SPECIAL_FOOD_FREQUENCY_KEY] = gameSettings.specialFoodFrequency
+            preferences[GameSettings.APP_LOCALE_KEY] = gameSettings.appLocale
         }
     }
     
@@ -89,6 +91,15 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateDifficulty(difficulty: Int) {
         context.settingsDataStore.edit { preferences ->
             preferences[GameSettings.DIFFICULTY_KEY] = difficulty.coerceIn(1, 5)
+        }
+    }
+    
+    /**
+     * Обновление локали приложения
+     */
+    suspend fun updateAppLocale(locale: String) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[GameSettings.APP_LOCALE_KEY] = locale
         }
     }
 } 

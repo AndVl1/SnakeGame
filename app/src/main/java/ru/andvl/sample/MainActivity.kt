@@ -16,6 +16,7 @@ import ru.andvl.sample.ui.RootContent
 import ru.andvl.sample.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -28,15 +29,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by rootComponent.settingsState.collectAsState(initial = null)
             
-            // Применяем тему в зависимости от настроек
-            MyApplicationTheme(
-                darkTheme = settings?.isDarkTheme ?: false
-            ) {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    RootContent(
-                        component = rootComponent,
-                        modifier = Modifier.padding(innerPadding)
-                    )
+            settings?.let { gameSettings ->
+                // Применяем тему в зависимости от настроек
+                MyApplicationTheme(
+                    darkTheme = gameSettings.isDarkTheme
+                ) {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize()
+                    ) { innerPadding ->
+                        RootContent(
+                            component = rootComponent,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 }
             }
         }

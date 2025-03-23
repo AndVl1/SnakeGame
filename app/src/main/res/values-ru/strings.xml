@@ -1,0 +1,79 @@
+<resources>
+    <!-- Общие строки -->
+    <string name="app_name">Змейка</string>
+    
+    <!-- Заголовки -->
+    <string name="game_title">Змейка</string>
+    <string name="how_to_play_title">Как играть</string>
+    <string name="save_score_title">Сохранить результат</string>
+    <string name="exit_confirmation_title">Выйти из игры?</string>
+
+    <!-- Кнопки и действия -->
+    <string name="start_game">Начать игру!</string>
+    <string name="resume_game">Продолжить</string>
+    <string name="pause_game">Пауза</string>
+    <string name="restart_game">Перезапуск</string>
+    <string name="instructions">Инструкции</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="exit">Выйти</string>
+
+    <!-- Игровая информация -->
+    <string name="score">Счёт: %d</string>
+    <string name="speed">Скорость: %.1f</string>
+    
+    <!-- Типы еды -->
+    <string name="food_regular">Обычная</string>
+    <string name="food_double_score">× 2 очки</string>
+    <string name="food_slow_down">Замедление</string>
+    
+    <!-- Диалог инструкций -->
+    <string name="instruction_swipe">Управляйте змейкой, свайпая в любом направлении</string>
+    <string name="instruction_walls">Проходите через стены, чтобы появиться с другой стороны</string>
+    <string name="instruction_food_intro">Собирайте еду для увеличения счета:</string>
+    <string name="instruction_food_regular">• Красная - обычная еда (+1 очко)</string>
+    <string name="instruction_food_double_score">• Золотая - двойные очки на 5 секунд</string>
+    <string name="instruction_food_slow_down">• Зеленая - временное замедление с возвратом к прежней скорости</string>
+    <string name="instruction_avoid">Избегайте препятствий и не сталкивайтесь с самим собой</string>
+    
+    <!-- Диалог сохранения счета -->
+    <string name="save_score_prompt">Введите ваше имя:</string>
+    <string name="save_score_info">Счёт: %1$d, Скорость: %2$.1f</string>
+    
+    <!-- Диалог выхода -->
+    <string name="exit_confirmation_message">Вы уверены, что хотите выйти? Текущий прогресс будет потерян.</string>
+
+    <!-- Информационная панель -->
+    <string name="score_display">Счет: %1$d</string>
+    <string name="speed_description">Скорость</string>
+
+    <!-- Диалог сохранения результатов -->
+    <string name="save_score_congratulations">Поздравляем!</string>
+    <string name="save_score_result">Ваш результат: %1$d очков</string>
+    <string name="save_score_speed">Скорость: %1$sx</string>
+    <string name="save_score_enter_name">Введите ваше имя для сохранения результата</string>
+    <string name="save_score_player_name">Имя игрока</string>
+    <string name="save_score_name_empty_error">Имя не может быть пустым</string>
+    <string name="save_score_button">Сохранить результат</string>
+
+    <!-- Направления движения -->
+    <string name="direction_up">Двигаться вверх</string>
+    <string name="direction_down">Двигаться вниз</string>
+    <string name="direction_left">Двигаться влево</string>
+    <string name="direction_right">Двигаться вправо</string>
+
+    <!-- Экран настроек -->
+    <string name="settings_title">Настройки</string>
+    <string name="back">Назад</string>
+    <string name="dark_theme">Темная тема</string>
+    <string name="dark_theme_description">Включить темный режим для приложения</string>
+    <string name="language_title">Язык приложения</string>
+    <string name="language_description">Изменить язык интерфейса приложения</string>
+    
+    <!-- Дополнительные строки экрана настроек -->
+    <string name="settings">Настройки</string>
+    <string name="appearance">Внешний вид</string>
+    <string name="language_settings">Настройки языка</string>
+    <string name="change_language">Изменить язык</string>
+    <string name="system_language">Системный язык</string>
+</resources> 
