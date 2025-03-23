@@ -339,13 +339,11 @@ class GameEngine(
      * Активация ускорения
      */
     private fun activateSpeedBoost() {
-        // Сохраняем предыдущее значение для логирования
-        val previousSpeed = speedFactor
+        // Сохраняем текущую базовую скорость для восстановления позже
+        val savedBaseSpeedFactor = baseSpeedFactor
+        val savedFoodEatenCount = foodEatenCount
         
-        // Сбрасываем базовую скорость до исходного значения (1.0f)
-        baseSpeedFactor = 1.0f
-        
-        // Применяем временный эффект ускорения (умножаем на коэффициент < 1.0 для ускорения)
+        // Применяем временный эффект замедления (умножаем на коэффициент < 1.0 для замедления)
         speedFactor = baseSpeedFactor * speedBoostMultiplier
         
         // Обновляем UI немедленно, чтобы отобразить изменение скорости
@@ -364,11 +362,10 @@ class GameEngine(
             // Отключаем визуальный эффект пульсации
             pulsatingSpeedActive = false
             
-            // Возвращаем скорость к базовому значению (которое теперь 1.0f)
+            // Возвращаем сохраненную скорость
+            baseSpeedFactor = savedBaseSpeedFactor
             speedFactor = baseSpeedFactor
-            
-            // Сбрасываем счетчик съеденных точек, т.к. скорость сброшена до исходной
-            foodEatenCount = 0
+            foodEatenCount = savedFoodEatenCount
             
             // Обновляем UI после изменений
             updateUiState()

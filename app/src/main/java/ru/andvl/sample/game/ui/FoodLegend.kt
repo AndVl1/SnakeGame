@@ -34,20 +34,20 @@ fun FoodLegend(modifier: Modifier = Modifier) {
         ) {
             // Обычная еда
             FoodLegendItem(
-                color = Color.Green,
+                color = Color.Red,
                 label = "Обычная"
             )
             
             // Двойные очки
             FoodLegendItem(
-                color = Color.Yellow,
+                color = Color(0xFFFFD700), // Золотой
                 label = "× 2 очки"
             )
             
             // Ускорение
             FoodLegendItem(
-                color = Color.Red,
-                label = "Скорость+"
+                color = Color.Green,
+                label = "Замедление"
             )
         }
     }

@@ -46,9 +46,9 @@ fun GameInstructionsDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 InstructionItem(text = "Собирайте еду для увеличения счета:")
-                InstructionItem(text = "• Зеленая - обычная еда (+1 очко)")
-                InstructionItem(text = "• Желтая - двойные очки на 5 секунд")
-                InstructionItem(text = "• Красная - временное ускорение")
+                InstructionItem(text = "• Красная - обычная еда (+1 очко)")
+                InstructionItem(text = "• Золотая - двойные очки на 5 секунд")
+                InstructionItem(text = "• Зеленая - временное замедление с возвратом к прежней скорости")
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
