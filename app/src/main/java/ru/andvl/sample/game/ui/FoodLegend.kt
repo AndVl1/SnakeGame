@@ -4,12 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,38 +18,38 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * Компонент отображения легенды типов еды
+ * Легенда для объяснения различных типов еды
  */
 @Composable
-fun FoodLegend(
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+fun FoodLegend(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.padding(vertical = 8.dp)
     ) {
-        FoodLegendItem(
-            color = Color.Red,
-            label = "Обычная"
-        )
-        
-        FoodLegendItem(
-            color = Color.Blue,
-            label = "Скорость"
-        )
-        
-        FoodLegendItem(
-            color = Color.Yellow,
-            label = "2X очки"
-        )
-        
-        FoodLegendItem(
-            color = Color.Magenta,
-            label = "Пульс"
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Обычная еда
+            FoodLegendItem(
+                color = Color.Green,
+                label = "Обычная"
+            )
+            
+            // Двойные очки
+            FoodLegendItem(
+                color = Color.Yellow,
+                label = "× 2 очки"
+            )
+            
+            // Ускорение
+            FoodLegendItem(
+                color = Color.Red,
+                label = "Скорость+"
+            )
+        }
     }
 }
 
@@ -58,24 +57,28 @@ fun FoodLegend(
  * Элемент легенды типа еды
  */
 @Composable
-fun FoodLegendItem(
+private fun FoodLegendItem(
     color: Color,
     label: String,
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = modifier.padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        // Цветной круг, представляющий тип еды
         Box(
             modifier = Modifier
-                .size(12.dp)
+                .size(10.dp)
                 .background(color, CircleShape)
         )
-        Spacer(modifier = Modifier.width(4.dp))
+        
+        // Подпись
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     }
 } 

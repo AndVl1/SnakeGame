@@ -49,237 +49,74 @@ import kotlinx.coroutines.launch
 import ru.andvl.sample.data.SettingsRepository
 import ru.andvl.sample.game.model.GameSettings
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Экран настроек
+ */
 @Composable
 fun SettingsScreen(
-    settingsRepository: SettingsRepository,
+    isDarkTheme: Boolean,
+    onThemeToggled: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = GameSettings())
-    
-    // Локальные состояния для слайдеров
-    var difficulty by remember { mutableIntStateOf(settings.difficulty) }
-    var boardSize by remember { mutableIntStateOf(settings.boardSize) }
-    var initialSpeed by remember { mutableFloatStateOf(settings.initialSpeedFactor) }
-    var maxObstacles by remember { mutableIntStateOf(settings.maxObstacles) }
-    var specialFoodFrequency by remember { mutableIntStateOf(settings.specialFoodFrequency) }
-    
-    // Локальные состояния для свитчей
-    var isDarkTheme by remember { mutableStateOf(settings.isDarkTheme) }
-    var vibrationsEnabled by remember { mutableStateOf(settings.vibrationsEnabled) }
-    var soundsEnabled by remember { mutableStateOf(settings.soundsEnabled) }
-    
-    // Синхронизация локальных состояний с настройками
-    LaunchedEffect(settings) {
-        difficulty = settings.difficulty
-        boardSize = settings.boardSize
-        initialSpeed = settings.initialSpeedFactor
-        maxObstacles = settings.maxObstacles
-        specialFoodFrequency = settings.specialFoodFrequency
-        isDarkTheme = settings.isDarkTheme
-        vibrationsEnabled = settings.vibrationsEnabled
-        soundsEnabled = settings.soundsEnabled
-    }
-    
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Настройки") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        coroutineScope.launch {
-                            settingsRepository.resetSettings()
-                        }
-                    }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Сбросить настройки")
-                    }
-                }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Заголовок с кнопкой назад
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Назад"
+                )
+            }
+            
+            Text(
+                text = "Настройки",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp)
             )
         }
-    ) { paddingValues ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        
+        // Настройки
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
         ) {
-            Text(
-                text = "Настройки игры",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-            
-            // Секция общих настроек
-            SettingsSection(title = "Общие настройки") {
-                // Темная тема
-                SettingsSwitchItem(
-                    title = "Темная тема",
-                    description = "Переключение между светлой и темной темой",
-                    icon = if (isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
-                    checked = isDarkTheme,
-                    onCheckedChange = { checked ->
-                        isDarkTheme = checked
-                        coroutineScope.launch {
-                            settingsRepository.updateDarkThemeEnabled(checked)
-                        }
-                    }
-                )
-                
-                // Вибрации
-                SettingsSwitchItem(
-                    title = "Вибрации",
-                    description = "Включить тактильную обратную связь",
-                    icon = Icons.Default.Vibration,
-                    checked = vibrationsEnabled,
-                    onCheckedChange = { checked ->
-                        vibrationsEnabled = checked
-                        coroutineScope.launch {
-                            settingsRepository.updateVibrationEnabled(checked)
-                        }
-                    }
-                )
-                
-                // Звуки
-                SettingsSwitchItem(
-                    title = "Звуки",
-                    description = "Включить звуковые эффекты",
-                    icon = Icons.Default.VolumeUp,
-                    checked = soundsEnabled,
-                    onCheckedChange = { checked ->
-                        soundsEnabled = checked
-                        coroutineScope.launch {
-                            settingsRepository.updateSoundEnabled(checked)
-                        }
-                    }
-                )
-            }
-            
-            // Секция настроек игрового процесса
-            SettingsSection(title = "Игровой процесс") {
-                // Сложность
-                SettingsSliderItem(
-                    title = "Сложность",
-                    description = "Уровень сложности игры",
-                    icon = Icons.Default.Settings,
-                    value = difficulty.toFloat(),
-                    valueRange = 1f..5f,
-                    steps = 3,
-                    valueText = "${difficulty.toInt()}",
-                    onValueChange = { 
-                        difficulty = it.toInt()
-                    },
-                    onValueChangeFinished = {
-                        coroutineScope.launch {
-                            settingsRepository.updateSettings(
-                                settings.copy(difficulty = difficulty)
-                            )
-                        }
-                    }
-                )
-                
-                // Размер поля
-                SettingsSliderItem(
-                    title = "Размер поля",
-                    description = "Размер игрового поля",
-                    icon = Icons.Default.Settings,
-                    value = boardSize.toFloat(),
-                    valueRange = 10f..20f,
-                    steps = 9,
-                    valueText = "${boardSize.toInt()}x${boardSize.toInt()}",
-                    onValueChange = { 
-                        boardSize = it.toInt()
-                    },
-                    onValueChangeFinished = {
-                        coroutineScope.launch {
-                            settingsRepository.updateSettings(
-                                settings.copy(boardSize = boardSize)
-                            )
-                        }
-                    }
-                )
-                
-                // Начальная скорость
-                SettingsSliderItem(
-                    title = "Начальная скорость",
-                    description = "Начальная скорость змейки",
-                    icon = Icons.Default.Speed,
-                    value = initialSpeed,
-                    valueRange = 0.5f..2.0f,
-                    steps = 5,
-                    valueText = String.format("%.1f", initialSpeed),
-                    onValueChange = { 
-                        initialSpeed = it
-                    },
-                    onValueChangeFinished = {
-                        coroutineScope.launch {
-                            settingsRepository.updateSettings(
-                                settings.copy(initialSpeedFactor = initialSpeed)
-                            )
-                        }
-                    }
-                )
-                
-                // Максимальное количество препятствий
-                SettingsSliderItem(
-                    title = "Максимум препятствий",
-                    description = "Максимальное количество препятствий на поле",
-                    icon = Icons.Default.Settings,
-                    value = maxObstacles.toFloat(),
-                    valueRange = 0f..10f,
-                    steps = 9,
-                    valueText = "$maxObstacles",
-                    onValueChange = { 
-                        maxObstacles = it.toInt()
-                    },
-                    onValueChangeFinished = {
-                        coroutineScope.launch {
-                            settingsRepository.updateSettings(
-                                settings.copy(maxObstacles = maxObstacles)
-                            )
-                        }
-                    }
-                )
-                
-                // Частота специальной еды
-                SettingsSliderItem(
-                    title = "Частота спец. еды",
-                    description = "Как часто появляется особая еда",
-                    icon = Icons.Default.Settings,
-                    value = specialFoodFrequency.toFloat(),
-                    valueRange = 1f..10f,
-                    steps = 8,
-                    valueText = "$specialFoodFrequency",
-                    onValueChange = { 
-                        specialFoodFrequency = it.toInt()
-                    },
-                    onValueChangeFinished = {
-                        coroutineScope.launch {
-                            settingsRepository.updateSettings(
-                                settings.copy(specialFoodFrequency = specialFoodFrequency)
-                            )
-                        }
-                    }
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Button(
-                onClick = onNavigateBack,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Готово")
+                // Переключатель темы
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Темная тема",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "Включить темный режим для приложения",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    Switch(
+                        checked = isDarkTheme,
+                        onCheckedChange = { onThemeToggled() }
+                    )
+                }
             }
         }
     }
