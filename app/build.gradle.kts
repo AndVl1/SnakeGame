@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "ru.andvl.sample"
+    namespace = "ru.andvl.snakegame"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "ru.andvl.sample"
+        applicationId = "ru.andvl.snakegame"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
