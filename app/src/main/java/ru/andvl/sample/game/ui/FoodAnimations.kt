@@ -2,12 +2,19 @@ package ru.andvl.sample.game.ui
 
 import android.util.Log
 import androidx.compose.animation.core.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -16,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import ru.andvl.sample.game.model.Food
 import ru.andvl.sample.game.model.FoodType
 import kotlin.math.absoluteValue
+import kotlin.math.min
 import kotlin.math.sin
 
 /**
@@ -23,19 +31,10 @@ import kotlin.math.sin
  */
 @Composable
 fun AnimatedFood(
-    food: Food?,
+    food: Food,
     boardSize: IntSize,
     modifier: Modifier = Modifier
 ) {
-    if (food == null) return
-    
-    // Вычисление размеров на основе доски
-    val boardWidth = boardSize.width
-    val boardHeight = boardSize.height
-    val pixelCellSize = boardWidth / boardHeight.toFloat()
-    
-    // Размер еды - 80% от размера ячейки для лучшей видимости
-    val foodSize = pixelCellSize * 0.8f
     
     // Определяем цвет на основе типа еды
     val foodColor = when (food.type) {
@@ -44,145 +43,110 @@ fun AnimatedFood(
         FoodType.DOUBLE_SCORE -> Color(0xFFFFD700) // Золотой
     }
     
-    // Вычисляем центр точки - правильное преобразование из логической позиции
-    val foodCenterX = (food.position.x + 0.5f) * pixelCellSize
-    val foodCenterY = (food.position.y + 0.5f) * pixelCellSize
-    
-    // Подробное логирование для отладки
-    LaunchedEffect(food) {
-        Log.d("AnimatedFood", "==== ОТРИСОВКА АНИМИРОВАННОЙ ЕДЫ ====")
-        Log.d("AnimatedFood", "Тип точки: ${food.type}")
-        Log.d("AnimatedFood", "Логические координаты сетки: (${food.position.x}, ${food.position.y})")
-        Log.d("AnimatedFood", "Размер ячейки Canvas: $pixelCellSize")
-        Log.d("AnimatedFood", "Пиксельные координаты центра: ($foodCenterX, $foodCenterY)")
-        Log.d("AnimatedFood", "Размер точки: $foodSize")
-    }
-    
-    // ДОБАВЛЯЕМ ОБЯЗАТЕЛЬНУЮ ОТРИСОВКУ ТОЧКИ В ЛЮБОМ СЛУЧАЕ
-    Canvas(modifier = modifier.fillMaxSize().border(3.dp, Color.Red)) {
-        // Рисуем базовый круг в любом случае для гарантии отображения
-        drawCircle(
-            color = foodColor,
-            radius = foodSize * 0.5f,
-            center = Offset(foodCenterX, foodCenterY)
-        )
-        
-        // Для отладки рисуем черную точку в центре
-        drawCircle(
-            color = Color.Black,
-            radius = 3f,
-            center = Offset(foodCenterX, foodCenterY)
-        )
-    }
-    
-    // Выбираем анимацию в зависимости от типа еды
-    when (food.type) {
-        FoodType.REGULAR -> RegularFoodAnimation(foodCenterX, foodCenterY, foodSize, foodColor, modifier)
-        FoodType.SPEED_BOOST -> SpeedBoostFoodAnimation(foodCenterX, foodCenterY, foodSize, foodColor, modifier)
-        FoodType.DOUBLE_SCORE -> DoubleScoreFoodAnimation(foodCenterX, foodCenterY, foodSize, foodColor, modifier)
-    }
-}
-
-/**
- * Анимация обычной еды - пульсирующий круг
- */
-@Composable
-private fun RegularFoodAnimation(x: Float, y: Float, size: Float, color: Color, modifier: Modifier) {
-    // Создаем бесконечный переход для анимации
+    // Создаем анимации для разных типов еды
     val infiniteTransition = rememberInfiniteTransition()
     
-    // Анимация масштаба для пульсации
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-    
-    // Отрисовка на Canvas
-    Canvas(modifier = modifier.fillMaxSize()) {
-        // Белая граница для лучшей видимости
-        drawCircle(
-            color = Color.White,
-            radius = size * scale * 0.55f,
-            center = Offset(x, y)
-        )
-        
-        // Цветной центр
-        drawCircle(
-            color = color,
-            radius = size * scale * 0.5f,
-            center = Offset(x, y)
-        )
+    // Анимация для обычной еды (пульсация)
+    val scale = if (food.type == FoodType.REGULAR) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.8f,
+            targetValue = 1.2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        ).value
+    } else {
+        1.0f
     }
-}
-
-/**
- * Анимация еды с ускорением - вращающийся квадрат
- */
-@Composable
-private fun SpeedBoostFoodAnimation(x: Float, y: Float, size: Float, color: Color, modifier: Modifier) {
-    // Создаем бесконечный переход для анимации
-    val infiniteTransition = rememberInfiniteTransition()
     
-    // Анимация вращения
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
-    )
+    // Анимация для ускорения (вращение)
+    val rotation = if (food.type == FoodType.SPEED_BOOST) {
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1500, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            )
+        ).value
+    } else {
+        0f
+    }
     
-    // Отрисовка на Canvas
+    // Анимация для удвоения очков (прозрачность)
+    val alpha = if (food.type == FoodType.DOUBLE_SCORE) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.5f,
+            targetValue = 1.0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(500, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        ).value
+    } else {
+        1.0f
+    }
+    
+    // Теперь рисуем анимации в Canvas, чтобы иметь доступ к размеру канваса
     Canvas(modifier = modifier.fillMaxSize()) {
-        // Вращаем Canvas вокруг центра еды
-        rotate(rotation, Offset(x, y)) {
-            // Белая граница для лучшей видимости
-            drawRect(
-                color = Color.White,
-                topLeft = Offset(x - size * 0.55f, y - size * 0.55f),
-                size = androidx.compose.ui.geometry.Size(size * 1.1f, size * 1.1f)
-            )
-            
-            // Цветной центр
-            drawRect(
-                color = color,
-                topLeft = Offset(x - size * 0.5f, y - size * 0.5f),
-                size = androidx.compose.ui.geometry.Size(size, size)
-            )
+        // Получаем фактические размеры канваса
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+        
+        // Рассчитываем размер ячейки так же, как в GameBoard
+        val pixelCellSize = canvasWidth / boardSize.width
+        
+        // Вычисляем центр еды в пикселях
+        val x = (food.position.x + 0.5f) * pixelCellSize
+        val y = (food.position.y + 0.5f) * pixelCellSize
+        
+        // Размер еды в пикселях
+        val foodSize = pixelCellSize * 0.4f
+
+        // Рисуем в зависимости от типа еды
+        when (food.type) {
+            FoodType.REGULAR -> {
+                // Рисуем белую обводку с анимацией
+                drawCircle(
+                    color = Color.White,
+                    center = Offset(x, y),
+                    radius = foodSize * 1.1f * scale
+                )
+                
+                // Рисуем сам круг с анимацией
+                drawCircle(
+                    color = foodColor,
+                    center = Offset(x, y),
+                    radius = foodSize * scale
+                )
+            }
+            FoodType.SPEED_BOOST -> {
+                // Вращаем Canvas вокруг центра еды
+                rotate(rotation, Offset(x, y)) {
+                    // Рисуем белую обводку для квадрата
+                    drawRect(
+                        color = Color.White,
+                        topLeft = Offset(x - foodSize * 1.1f, y - foodSize * 1.1f),
+                        size = Size(foodSize * 2.2f, foodSize * 2.2f)
+                    )
+                    
+                    // Рисуем сам квадрат
+                    drawRect(
+                        color = foodColor,
+                        topLeft = Offset(x - foodSize, y - foodSize),
+                        size = Size(foodSize * 2, foodSize * 2)
+                    )
+                }
+            }
+            FoodType.DOUBLE_SCORE -> {
+                // Рисуем ромб с белой обводкой
+                drawDiamond(x, y, foodSize * 2.2f, Color.White)
+                
+                // Рисуем ромб основного цвета с анимацией прозрачности
+                drawDiamond(x, y, foodSize * 2f, foodColor.copy(alpha = alpha))
+            }
         }
-    }
-}
-
-/**
- * Анимация еды с удвоением очков - мерцающий ромб
- */
-@Composable
-private fun DoubleScoreFoodAnimation(x: Float, y: Float, size: Float, color: Color, modifier: Modifier) {
-    // Создаем бесконечный переход для анимации
-    val infiniteTransition = rememberInfiniteTransition()
-    
-    // Анимация прозрачности для мерцания
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-    
-    // Отрисовка на Canvas
-    Canvas(modifier = modifier.fillMaxSize()) {
-        // Белая граница для лучшей видимости
-        drawDiamond(x, y, size * 1.1f, Color.White)
-        
-        // Цветной центр с анимированной прозрачностью
-        drawDiamond(x, y, size, color.copy(alpha = alpha))
     }
 }
 

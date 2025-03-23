@@ -1,6 +1,5 @@
 package ru.andvl.sample.game.ui
 
-import android.util.Log
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -13,6 +12,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,24 +22,23 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import ru.andvl.sample.game.Direction
 import ru.andvl.sample.game.FoodType
 import ru.andvl.sample.game.Obstacle
 import ru.andvl.sample.game.SnakePart
 import ru.andvl.sample.game.model.DisplayGameFood
-import ru.andvl.sample.game.model.Food
-import ru.andvl.sample.game.model.FoodType as NewFoodType
 import ru.andvl.sample.game.model.GameModelConverter
+import ru.andvl.sample.game.model.Food as NewFood
+import ru.andvl.sample.game.model.FoodType as NewFoodType
 import ru.andvl.sample.game.model.GridPosition
 import kotlin.math.abs
 
-// Константы для размеров игрового поля
-private const val GRID_SIZE = 16
-private const val BOARD_SIZE_FOR_FOOD = 20
+// Константа для размера сетки (по умолчанию)
+const val GRID_SIZE = 16
 
 /**
  * Компонент игрового поля
@@ -56,11 +55,6 @@ fun GameBoard(
     boardSize: Int = GRID_SIZE, // Используем константу по умолчанию
     onDirectionChange: (Direction) -> Unit,
 ) {
-    // Логирование координат еды
-    LaunchedEffect(food) {
-        Log.d("GameBoard", "Еда появилась: тип=${food.type}, позиция=(${food.position.x}, ${food.position.y})")
-    }
-    
     // Анимация пульсации для смерти
     val infiniteTransition = rememberInfiniteTransition(label = "deathPulse")
     val pulseScale by infiniteTransition.animateFloat(
@@ -117,8 +111,6 @@ fun GameBoard(
             savedCanvasWidth = canvasWidth
             savedPixelCellSize = pixelCellSize
             
-            Log.d("GameBoard", "Размер Canvas: width=$canvasWidth, height=$canvasHeight, cellSize=$pixelCellSize")
-
             // Рисуем сетку
             val gridColor = Color(0xFFDDDDDD)
             for (i in 0..boardSize) {
@@ -191,13 +183,6 @@ fun GameBoard(
             val foodCenterX = (gridX + 0.5f) * pixelCellSize
             val foodCenterY = (gridY + 0.5f) * pixelCellSize
             
-            Log.d("GameBoard", "==== ОТЛАДКА КООРДИНАТ ЕДЫ ====")
-            Log.d("GameBoard", "Исходные пиксельные: x=${food.position.x}, y=${food.position.y}")
-            Log.d("GameBoard", "Множитель GameModelConverter.CELL_SIZE=${GameModelConverter.CELL_SIZE}")
-            Log.d("GameBoard", "Множитель нашего Canvas pixelCellSize=$pixelCellSize")
-            Log.d("GameBoard", "Логические координаты сетки: x=$gridX, y=$gridY") 
-            Log.d("GameBoard", "Пиксельные координаты центра для отрисовки: x=$foodCenterX, y=$foodCenterY")
-            
             // Определяем цвет на основе типа еды
             val foodColor = when (food.type) {
                 FoodType.REGULAR -> Color.Red
@@ -212,20 +197,6 @@ fun GameBoard(
                 radius = pixelCellSize * 0.4f,
                 center = Offset(foodCenterX, foodCenterY)
             )
-            
-            // Рисуем границу ячейки для отладки
-            drawRect(
-                color = Color.Blue.copy(alpha = 0.3f),
-                topLeft = Offset(gridX * pixelCellSize, gridY * pixelCellSize),
-                size = Size(pixelCellSize, pixelCellSize)
-            )
-            
-            // Рисуем индикатор центра ячейки
-            drawCircle(
-                color = Color.Black,
-                radius = 3f,
-                center = Offset(foodCenterX, foodCenterY)
-            )
         }
         
         // Расчет размера ячейки для анимированной еды
@@ -235,12 +206,9 @@ fun GameBoard(
         val gridX = (food.position.x / GameModelConverter.CELL_SIZE).toInt()
         val gridY = (food.position.y / GameModelConverter.CELL_SIZE).toInt()
         
-        // Логирование позиции еды
-        Log.d("GameBoard", "Позиция точки для AnimatedFood: x=${food.position.x}, y=${food.position.y}")
-        
         // ИСПРАВЛЯЕМ ЛОГИКУ ДЛЯ АНИМИРОВАННОЙ ЕДЫ
         // Создаем точку для анимации с корректными координатами сетки
-        val foodObj = Food(
+        val foodObj = NewFood(
             position = GridPosition(
                 x = gridX,
                 y = gridY
@@ -252,9 +220,6 @@ fun GameBoard(
                 else -> NewFoodType.REGULAR
             }
         )
-        
-        // Подробное логирование для отладки
-        Log.d("GameBoard", "Создана точка для анимации: тип=${foodObj.type}, позиция=(${foodObj.position.x}, ${foodObj.position.y})")
         
         // Создаем IntSize для доски
         val boardSizeForAnimatedFood = IntSize(boardSize, boardSize)

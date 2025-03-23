@@ -44,10 +44,6 @@ class GameComponent(
                 GridPosition(snakePart.x, snakePart.y)
             }
             
-            // Логирование для отладки проблемы с коллизией
-            println("DEBUG GameComponent: Обновление состояния UI")
-            println("DEBUG GameComponent: Еда в GameEngine: ${uiState.food.position.x}, ${uiState.food.position.y}")
-            
             _state.value = _state.value.copy(
                 snakeParts = snakeParts,
                 food = uiState.food,

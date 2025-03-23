@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -15,7 +16,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,13 +42,22 @@ fun GameActionControls(
     onShowInstructionsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    FlowRow(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp), // Уменьшаем вертикальный отступ
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Кнопка игры/паузы
+        // Вспомогательная кнопка инструкций (только иконка)
+        GameIconButton(
+            icon = Icons.Default.Info,
+            contentDescription = "Показать инструкции",
+            onClick = onShowInstructionsClick,
+            modifier = Modifier
+        )
+        
+        // Основная кнопка игры/паузы (с текстом)
         ActionButton(
             icon = when (gameState) {
                 GameState.Running -> Icons.Default.Pause
@@ -58,29 +70,48 @@ fun GameActionControls(
             },
             onClick = onPlayPauseClick,
             isPrimary = true,
-            modifier = Modifier.weight(1.2f) // Даем чуть больше пространства главной кнопке
+            modifier = Modifier.weight(1f)
         )
         
-        // Кнопка перезапуска
-        ActionButton(
+        // Вспомогательная кнопка рестарта (только иконка)
+        GameIconButton(
             icon = Icons.Default.Refresh,
-            text = "Рестарт",
+            contentDescription = "Перезапустить игру",
             onClick = onRestartClick,
-            modifier = Modifier.weight(1f)
-        )
-        
-        // Кнопка инструкций
-        ActionButton(
-            icon = Icons.Default.Info,
-            text = "Инфо",
-            onClick = onShowInstructionsClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
         )
     }
 }
 
 /**
- * Кнопка действия в интерфейсе
+ * Кнопка-иконка для управления игрой
+ */
+@Composable
+private fun GameIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FilledIconButton(
+        onClick = onClick,
+        modifier = modifier.size(50.dp),
+        shape = CircleShape,
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(28.dp)
+        )
+    }
+}
+
+/**
+ * Кнопка действия в интерфейсе с текстом
  */
 @Composable
 private fun ActionButton(
@@ -103,12 +134,12 @@ private fun ActionButton(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             )
         },
-        shape = RoundedCornerShape(8.dp), // Более квадратная форма с небольшим округлением
+        shape = RoundedCornerShape(8.dp),
         modifier = modifier
             .padding(horizontal = 6.dp)
-            .padding(vertical = 8.dp), // Увеличенный вертикальный отступ
+            .padding(vertical = 8.dp),
         elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 4.dp, // Добавляем небольшую тень для лучшей различимости
+            defaultElevation = 4.dp,
             pressedElevation = 8.dp
         )
     ) {
@@ -117,12 +148,12 @@ private fun ActionButton(
             contentDescription = null,
             modifier = Modifier
                 .padding(end = 8.dp)
-                .size(28.dp) // Увеличиваем размер иконки
+                .size(28.dp)
         )
         Text(
             text = text,
             fontWeight = FontWeight.Bold,
-            fontSize = 16.sp // Увеличиваем размер текста
+            fontSize = 16.sp
         )
     }
-} 
+}

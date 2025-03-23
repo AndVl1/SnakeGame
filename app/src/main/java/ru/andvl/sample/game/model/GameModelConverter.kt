@@ -10,7 +10,6 @@ import ru.andvl.sample.game.model.Food
 import ru.andvl.sample.game.model.FoodType as NewFoodType
 import ru.andvl.sample.game.model.GridPosition
 import ru.andvl.sample.game.model.SnakePart as NewSnakePart
-import android.util.Log
 
 /**
  * Класс, представляющий еду в игре для отображения на UI
@@ -131,8 +130,6 @@ object GameModelConverter {
         val pixelX = gridX * CELL_SIZE + (CELL_SIZE / 2)
         val pixelY = gridY * CELL_SIZE + (CELL_SIZE / 2)
         
-        Log.d("GameModelConverter", "ПРЕОБРАЗОВАНИЕ КООРДИНАТ: из логических ($gridX, $gridY) в пиксельные ($pixelX, $pixelY)")
-        
         return DisplayGameFood(Offset(pixelX, pixelY), convertFoodType(food.type))
     }
 
@@ -148,8 +145,6 @@ object GameModelConverter {
         // Делим координаты на размер ячейки и округляем
         val gridX = (pixelX / CELL_SIZE).toInt()
         val gridY = (pixelY / CELL_SIZE).toInt()
-        
-        Log.d("GameModelConverter", "ОБРАТНОЕ ПРЕОБРАЗОВАНИЕ: из пиксельных ($pixelX, $pixelY) в логические ($gridX, $gridY)")
         
         return Food(GridPosition(gridX, gridY), convertFoodType(gameFood.type))
     }

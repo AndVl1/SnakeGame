@@ -206,9 +206,6 @@ class GameEngine(
     private fun calculateUpdateDelay(): Long {
         val baseDelay = (initialUpdateDelay / speedFactor).toLong()
         
-        // Добавляем логирование для отладки
-        println("DEBUG: Расчет задержки обновления: базовый множитель=${baseSpeedFactor}x, текущий множитель=${speedFactor}x")
-        
         return if (pulsatingSpeedActive) {
             // Расчет пульсирующей скорости
             val pulseFactor = 0.5f + 0.5f * kotlin.math.sin(System.currentTimeMillis() / 200.0)
@@ -253,8 +250,6 @@ class GameEngine(
         // Добавление новой головы
         snakeParts.add(0, newHead)
         
-        // НОВАЯ ЛОГИКА ПРОВЕРКИ КОЛЛИЗИИ С ЕДОЙ
-        
         // Координаты головы змейки
         val headX = newHead.x
         val headY = newHead.y
@@ -263,19 +258,11 @@ class GameEngine(
         val foodX = food.position.x
         val foodY = food.position.y
         
-        // Логирование для отладки
-        println("DEBUG: Проверка коллизии:")
-        println("DEBUG: - Координаты головы змейки: ($headX, $headY)")
-        println("DEBUG: - Координаты точки: ($foodX, $foodY)")
-        
         // Проверка точного совпадения координат
         val foodEaten = (headX == foodX && headY == foodY)
-        println("DEBUG: - Точка съедена: $foodEaten")
         
         if (foodEaten) {
             // Если съели точку
-            println("DEBUG: ТОЧКА СЪЕДЕНА!")
-            
             // Начисляем очки и активируем эффекты
             processEatenFood()
             
@@ -300,19 +287,15 @@ class GameEngine(
         val points = if (doubleScoreActive) 2 else 1
         score += points
         
-        println("DEBUG: Начислено очков: $points, всего очков: $score")
-        
         // Обрабатываем логику увеличения скорости для обычных точек
         if (food.type == FoodType.REGULAR) {
             // Увеличиваем счетчик съеденных точек
             foodEatenCount++
-            println("DEBUG: Съедена обычная точка, счетчик: $foodEatenCount")
             
             // Каждые 3 съеденные точки увеличиваем скорость на 0.1
             if (foodEatenCount % 3 == 0) {
                 baseSpeedFactor += 0.1f
                 speedFactor = baseSpeedFactor // Обновляем текущую скорость
-                println("DEBUG: Увеличение базовой скорости до ${String.format("%.1f", baseSpeedFactor)}x после каждых 3 точек")
                 updateUiState() // Обновляем UI для отображения новой скорости
             }
         }
@@ -320,17 +303,12 @@ class GameEngine(
         // Применяем эффекты в зависимости от типа точки
         when (food.type) {
             FoodType.REGULAR -> {
-                // Ничего дополнительно не делаем
-                println("DEBUG: Съедена обычная точка")
+                // Обработка происходит выше
             }
             FoodType.DOUBLE_SCORE -> {
-                println("DEBUG: Съедена точка удвоения очков, активируем эффект")
                 activateDoubleScore()
             }
             FoodType.SPEED_BOOST -> {
-                println("DEBUG: Съедена точка ускорения, активируем эффект")
-                println("DEBUG: Скорость ДО активации: ${String.format("%.1f", baseSpeedFactor)}x")
-                // Сброс скорости до исходного значения происходит внутри метода activateSpeedBoost()
                 activateSpeedBoost()
             }
         }
@@ -351,10 +329,8 @@ class GameEngine(
         
         // Запускаем новую задачу для отключения эффекта через заданное время
         doubleScoreJob = scope.launch {
-            println("DEBUG: Эффект удвоения очков активирован на $doubleScoreDuration мс")
             delay(doubleScoreDuration)
             doubleScoreActive = false
-            println("DEBUG: Эффект удвоения очков деактивирован")
             updateUiState()
         }
     }
@@ -372,8 +348,6 @@ class GameEngine(
         // Применяем временный эффект ускорения (умножаем на коэффициент < 1.0 для ускорения)
         speedFactor = baseSpeedFactor * speedBoostMultiplier
         
-        println("DEBUG: Изменение скорости при активации эффекта: ${String.format("%.1f", previousSpeed)}x → ${String.format("%.1f", speedFactor)}x")
-        
         // Обновляем UI немедленно, чтобы отобразить изменение скорости
         updateUiState()
         
@@ -385,17 +359,13 @@ class GameEngine(
         
         // Запускаем новую задачу для отключения эффекта через заданное время
         pulsatingSpeedJob = scope.launch {
-            println("DEBUG: Эффект ускорения активирован на $speedBoostDuration мс")
             delay(speedBoostDuration)
             
             // Отключаем визуальный эффект пульсации
             pulsatingSpeedActive = false
             
             // Возвращаем скорость к базовому значению (которое теперь 1.0f)
-            val tempSpeed = speedFactor
             speedFactor = baseSpeedFactor
-            
-            println("DEBUG: Эффект ускорения деактивирован, возврат к базовой скорости: ${String.format("%.1f", tempSpeed)}x → ${String.format("%.1f", baseSpeedFactor)}x")
             
             // Сбрасываем счетчик съеденных точек, т.к. скорость сброшена до исходной
             foodEatenCount = 0
@@ -448,7 +418,7 @@ class GameEngine(
                 
                 // Проверяем что позиция не занята змейкой или препятствием
                 val positionFree = !snakeParts.any { it.x == position.x && it.y == position.y } && 
-                                   !obstacles.any { it.position.x == position.x && it.position.y == position.y }
+                               !obstacles.any { it.position.x == position.x && it.position.y == position.y }
                 
                 if (positionFree) {
                     availablePositions.add(position)
@@ -469,19 +439,6 @@ class GameEngine(
             
             // Создаем новую точку
             food = Food(randomPosition, foodType)
-            
-            // Логирование для отладки
-            println("DEBUG: Создана новая точка:")
-            println("DEBUG: - Позиция: (${randomPosition.x}, ${randomPosition.y})")
-            println("DEBUG: - Тип: $foodType")
-            
-            // Вывод текущих позиций всех частей змейки
-            println("DEBUG: Текущие позиции змейки:")
-            snakeParts.forEachIndexed { index, part ->
-                println("DEBUG: - Часть $index: (${part.x}, ${part.y})")
-            }
-        } else {
-            println("DEBUG: ВНИМАНИЕ! Нет доступных позиций для точки!")
         }
     }
     

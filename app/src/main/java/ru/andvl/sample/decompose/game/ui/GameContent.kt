@@ -105,12 +105,6 @@ fun GameContent(
         // Игровое поле
         val displayFood = GameModelConverter.convertFoodToDisplayGameFood(state.food)
         
-        // Логирование для отладки
-        LaunchedEffect(state.food) {
-            println("DEBUG GameContent: Еда в состоянии: x=${state.food.position.x}, y=${state.food.position.y}")
-            println("DEBUG GameContent: Еда после конвертации для UI: x=${displayFood.position.x}, y=${displayFood.position.y}")
-        }
-        
         GameBoard(
             snakeParts = GameModelConverter.convertGridPositionsToSnakeParts(state.snakeParts),
             food = displayFood,
