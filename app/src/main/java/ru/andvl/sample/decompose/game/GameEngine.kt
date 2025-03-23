@@ -63,6 +63,8 @@ class GameEngine(
     private var obstacles = mutableListOf<Obstacle>()
     private var score = 0
     private var speedFactor = 1.0f
+    private var baseSpeedFactor = 1.0f // Базовый множитель скорости без временных эффектов
+    private var foodEatenCount = 0 // Счетчик съеденных точек
     
     // Флаги эффектов
     private var doubleScoreActive = false
@@ -110,6 +112,8 @@ class GameEngine(
         nextDirection = Direction.RIGHT
         score = 0
         speedFactor = 1.0f
+        baseSpeedFactor = 1.0f // Сбрасываем базовую скорость
+        foodEatenCount = 0 // Сбрасываем счетчик съеденных точек
         doubleScoreActive = false
         pulsatingSpeedActive = false
         deathAnimationActive = false
@@ -201,6 +205,9 @@ class GameEngine(
      */
     private fun calculateUpdateDelay(): Long {
         val baseDelay = (initialUpdateDelay / speedFactor).toLong()
+        
+        // Добавляем логирование для отладки
+        println("DEBUG: Расчет задержки обновления: базовый множитель=${baseSpeedFactor}x, текущий множитель=${speedFactor}x")
         
         return if (pulsatingSpeedActive) {
             // Расчет пульсирующей скорости
@@ -295,6 +302,21 @@ class GameEngine(
         
         println("DEBUG: Начислено очков: $points, всего очков: $score")
         
+        // Обрабатываем логику увеличения скорости для обычных точек
+        if (food.type == FoodType.REGULAR) {
+            // Увеличиваем счетчик съеденных точек
+            foodEatenCount++
+            println("DEBUG: Съедена обычная точка, счетчик: $foodEatenCount")
+            
+            // Каждые 3 съеденные точки увеличиваем скорость на 0.1
+            if (foodEatenCount % 3 == 0) {
+                baseSpeedFactor += 0.1f
+                speedFactor = baseSpeedFactor // Обновляем текущую скорость
+                println("DEBUG: Увеличение базовой скорости до ${String.format("%.1f", baseSpeedFactor)}x после каждых 3 точек")
+                updateUiState() // Обновляем UI для отображения новой скорости
+            }
+        }
+        
         // Применяем эффекты в зависимости от типа точки
         when (food.type) {
             FoodType.REGULAR -> {
@@ -307,6 +329,8 @@ class GameEngine(
             }
             FoodType.SPEED_BOOST -> {
                 println("DEBUG: Съедена точка ускорения, активируем эффект")
+                println("DEBUG: Скорость ДО активации: ${String.format("%.1f", baseSpeedFactor)}x")
+                // Сброс скорости до исходного значения происходит внутри метода activateSpeedBoost()
                 activateSpeedBoost()
             }
         }
@@ -318,6 +342,9 @@ class GameEngine(
     private fun activateDoubleScore() {
         // Активируем эффект
         doubleScoreActive = true
+        
+        // Обновляем UI немедленно
+        updateUiState()
         
         // Отменяем предыдущую задачу, если она была
         doubleScoreJob?.cancel()
@@ -336,8 +363,19 @@ class GameEngine(
      * Активация ускорения
      */
     private fun activateSpeedBoost() {
-        // Увеличиваем скорость
-        speedFactor *= speedBoostMultiplier
+        // Сохраняем предыдущее значение для логирования
+        val previousSpeed = speedFactor
+        
+        // Сбрасываем базовую скорость до исходного значения (1.0f)
+        baseSpeedFactor = 1.0f
+        
+        // Применяем временный эффект ускорения (умножаем на коэффициент < 1.0 для ускорения)
+        speedFactor = baseSpeedFactor * speedBoostMultiplier
+        
+        println("DEBUG: Изменение скорости при активации эффекта: ${String.format("%.1f", previousSpeed)}x → ${String.format("%.1f", speedFactor)}x")
+        
+        // Обновляем UI немедленно, чтобы отобразить изменение скорости
+        updateUiState()
         
         // Отменяем предыдущую задачу, если она была
         pulsatingSpeedJob?.cancel()
@@ -349,9 +387,20 @@ class GameEngine(
         pulsatingSpeedJob = scope.launch {
             println("DEBUG: Эффект ускорения активирован на $speedBoostDuration мс")
             delay(speedBoostDuration)
+            
+            // Отключаем визуальный эффект пульсации
             pulsatingSpeedActive = false
-            speedFactor /= speedBoostMultiplier
-            println("DEBUG: Эффект ускорения деактивирован")
+            
+            // Возвращаем скорость к базовому значению (которое теперь 1.0f)
+            val tempSpeed = speedFactor
+            speedFactor = baseSpeedFactor
+            
+            println("DEBUG: Эффект ускорения деактивирован, возврат к базовой скорости: ${String.format("%.1f", tempSpeed)}x → ${String.format("%.1f", baseSpeedFactor)}x")
+            
+            // Сбрасываем счетчик съеденных точек, т.к. скорость сброшена до исходной
+            foodEatenCount = 0
+            
+            // Обновляем UI после изменений
             updateUiState()
         }
     }

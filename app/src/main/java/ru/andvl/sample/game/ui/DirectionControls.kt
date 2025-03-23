@@ -6,14 +6,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -33,48 +36,55 @@ fun GameDirectionControls(
     onDirectionChange: (Direction) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    // Размер кнопок
+    val buttonSize = 70.dp
+    
+    // Основной контейнер для управления
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(vertical = 16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        // Кнопка ВВЕРХ
-        DirectionButton(
-            icon = Icons.Default.KeyboardArrowUp,
-            direction = Direction.UP,
-            onDirectionChange = onDirectionChange
-        )
-        
-        // Ряд с кнопками ВЛЕВО и ВПРАВО
+        // Основной ряд с кнопками ВЛЕВО, центральным столбцом и ВПРАВО
         Row(
-            modifier = Modifier.padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Кнопка ВЛЕВО
             DirectionButton(
-                icon = Icons.Default.KeyboardArrowLeft,
+                icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 direction = Direction.LEFT,
                 onDirectionChange = onDirectionChange
             )
             
-            Spacer(modifier = Modifier.width(40.dp))
+            // Центральная колонка с кнопками ВВЕРХ и ВНИЗ
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Кнопка ВВЕРХ
+                DirectionButton(
+                    icon = Icons.Default.KeyboardArrowUp,
+                    direction = Direction.UP,
+                    onDirectionChange = onDirectionChange
+                )
+                
+                // Кнопка ВНИЗ
+                DirectionButton(
+                    icon = Icons.Default.KeyboardArrowDown,
+                    direction = Direction.DOWN,
+                    onDirectionChange = onDirectionChange
+                )
+            }
             
             // Кнопка ВПРАВО
             DirectionButton(
-                icon = Icons.Default.KeyboardArrowRight,
+                icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 direction = Direction.RIGHT,
                 onDirectionChange = onDirectionChange
             )
         }
-        
-        // Кнопка ВНИЗ
-        DirectionButton(
-            icon = Icons.Default.KeyboardArrowDown,
-            direction = Direction.DOWN,
-            onDirectionChange = onDirectionChange
-        )
     }
 }
 
@@ -85,12 +95,17 @@ fun GameDirectionControls(
 private fun DirectionButton(
     icon: ImageVector,
     direction: Direction,
-    onDirectionChange: (Direction) -> Unit
+    onDirectionChange: (Direction) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Box(contentAlignment = Alignment.Center) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+    ) {
         FilledIconButton(
             onClick = { onDirectionChange(direction) },
-            modifier = Modifier.size(56.dp),
+            modifier = Modifier.size(70.dp),
+            shape = RoundedCornerShape(8.dp),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -99,7 +114,7 @@ private fun DirectionButton(
             Icon(
                 imageVector = icon,
                 contentDescription = "Двигаться ${getDirectionName(direction)}",
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(40.dp)
             )
         }
     }

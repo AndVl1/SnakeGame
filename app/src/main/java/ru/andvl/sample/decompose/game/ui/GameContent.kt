@@ -21,6 +21,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
 import ru.andvl.sample.decompose.game.GameComponent
 import ru.andvl.sample.game.Obstacle
@@ -76,14 +80,15 @@ fun GameContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Заголовок игры
         Text(
             text = "Змейка",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
             textAlign = TextAlign.Center
         )
         
@@ -119,19 +124,27 @@ fun GameContent(
             modifier = Modifier.fillMaxWidth()
         )
         
+        // Небольшой отступ между полем и элементами управления
+        Spacer(modifier = Modifier.height(4.dp))
+        
         // Элементы управления направлением
         GameDirectionControls(
             onDirectionChange = { 
                 component.onDirectionChange(GameModelConverter.convertDirection(it))
-            }
+            },
+            modifier = Modifier.padding(vertical = 4.dp)
         )
+        
+        // Небольшой отступ между элементами управления и кнопками действий
+        Spacer(modifier = Modifier.height(4.dp))
         
         // Кнопки действий
         GameActionControls(
             gameState = state.gameState,
             onPlayPauseClick = component::onPlayPauseClick,
             onRestartClick = component::onRestartClick,
-            onShowInstructionsClick = component::onShowInstructionsClick
+            onShowInstructionsClick = component::onShowInstructionsClick,
+            modifier = Modifier.padding(bottom = 8.dp)
         )
     }
     
