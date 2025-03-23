@@ -5,7 +5,7 @@
 Игра "Змейка" для Android, полностью разработанная с помощью Cursor AI под управлением модели Claude 3.7 Sonnet от Anthropic в рамках встречи московского сообщества мобильных разработчиков [Mobile Pool](https://t.me/+4_MztHl5hSM4OGUy).
 Проект демонстрирует современные подходы к разработке мобильных приложений с использованием Jetpack Compose и архитектуры Decompose.
 
-![Змейка для Android](https://via.placeholder.com/800x400?text=Змейка+для+Android)
+![Змейка для Android](https://github.com/AndVl1/SnakeGame/blob/main/app/src/main/res/playstore-icon.png)
 
 ## Особенности игры
 
@@ -57,7 +57,7 @@
 
 1. Клонируйте репозиторий
 ```
-git clone https://github.com/AndVl1/snake-game-android.git
+git clone https://github.com/AndVl1/SnakeGame.git
 ```
 
 2. Откройте проект в Android Studio
