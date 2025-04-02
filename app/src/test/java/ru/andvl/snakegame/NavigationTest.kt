@@ -68,7 +68,7 @@ class NavigationTest {
     }
     
     @Test
-    fun `test navigation directly calls callbacks without intent-label cycles`() = runTest {
+    fun `test navigation works through MVI labels`() = runTest {
         // Создаем компонент с реальными колбеками
         val component = LeaderboardComponent(
             componentContext = componentContext,
@@ -78,21 +78,30 @@ class NavigationTest {
             onSettingsClick = onSettingsClick
         )
         
-        // Вызываем метод, который должен напрямую вызвать колбек для навигации
+        // Запускаем обработку корутин, чтобы обработать init-блок компонента
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // Вызываем метод, который должен отправить Intent в Store
         component.onStartGameClick()
         
-        // Проверяем, что колбек был вызван ровно один раз
+        // Запускаем обработку корутин, чтобы обработать Intent и опубликовать Label
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // Проверяем, что колбек был вызван ровно один раз через поток лейблов
         assert(gameNavigationCounter == 1) { "Game navigation counter should be 1, but was $gameNavigationCounter" }
         
         // Вызываем метод для навигации в настройки
         component.onSettingsClick()
         
-        // Проверяем, что колбек был вызван ровно один раз
+        // Запускаем обработку корутин
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // Проверяем, что колбек был вызван ровно один раз через поток лейблов
         assert(settingsNavigationCounter == 1) { "Settings navigation counter should be 1, but was $settingsNavigationCounter" }
     }
     
     @Test
-    fun `test multiple navigation calls are properly handled`() = runTest {
+    fun `test multiple navigation calls are properly handled through MVI`() = runTest {
         // Создаем компонент с реальными колбеками
         val component = LeaderboardComponent(
             componentContext = componentContext,
@@ -102,14 +111,20 @@ class NavigationTest {
             onSettingsClick = onSettingsClick
         )
         
+        // Запускаем обработку корутин для инициализации
+        testDispatcher.scheduler.advanceUntilIdle()
+        
         // Вызываем метод для навигации несколько раз
         component.onStartGameClick()
-        component.onStartGameClick()
-        component.onStartGameClick()
+        testDispatcher.scheduler.advanceUntilIdle()
         
-        // Проверяем, что колбек был вызван ровно три раза
-        // (поскольку теперь у нас нет защиты от повторных вызовов - 
-        // это должно быть реализовано на уровне контейнера навигации)
+        component.onStartGameClick()
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        component.onStartGameClick()
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // Проверяем, что колбек был вызван ровно три раза через поток лейблов
         assert(gameNavigationCounter == 3) { "Game navigation counter should be 3, but was $gameNavigationCounter" }
     }
     
