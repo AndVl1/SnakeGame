@@ -38,7 +38,7 @@ jobs:
       uses: android-actions/setup-android@v2
       with:
         cmdline-tools-version: '8.0'
-        packages: 'build-tools;33.0.0,build-tools;30.0.3,platforms;android-35'
+        packages: 'build-tools;35.0.0,build-tools;33.0.0,build-tools;30.0.3,build-tools;29.0.3,platforms;android-35'
 
     # Кэширование Gradle Wrapper
     - name: Cache Gradle Wrapper
@@ -139,7 +139,8 @@ jobs:
       id: sign_apk
       uses: r0adkll/sign-android-release@v1
       env:
-        BUILD_TOOLS_VERSION: "33.0.0"
+        BUILD_TOOLS_VERSION: "35.0.0"
+        ANDROID_HOME: "/usr/local/lib/android/sdk"
       with:
         releaseDirectory: app/build/outputs/apk/release
         signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
@@ -152,7 +153,8 @@ jobs:
       id: sign_bundle
       uses: r0adkll/sign-android-release@v1
       env:
-        BUILD_TOOLS_VERSION: "33.0.0"
+        BUILD_TOOLS_VERSION: "35.0.0"
+        ANDROID_HOME: "/usr/local/lib/android/sdk"
       with:
         releaseDirectory: app/build/outputs/bundle/release
         signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
@@ -164,8 +166,40 @@ jobs:
     - name: Rename APK and Bundle files
       run: |
         mkdir -p renamed_apk
-        cp ${{ steps.sign_apk.outputs.signedReleaseFile }} renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk
-        cp ${{ steps.sign_bundle.outputs.signedReleaseFile }} renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.aab
+        
+        # Копируем APK с проверкой
+        if [ -f "${{ steps.sign_apk.outputs.signedReleaseFile }}" ]; then
+          cp "${{ steps.sign_apk.outputs.signedReleaseFile }}" "renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk"
+          echo "✅ APK file copied successfully"
+        else
+          echo "⚠️ Signed APK not found at: ${{ steps.sign_apk.outputs.signedReleaseFile }}"
+          echo "Looking for alternative APK file..."
+          # Поиск альтернативных файлов
+          if [ -f "app/build/outputs/apk/release/app-release-signed.apk" ]; then
+            cp "app/build/outputs/apk/release/app-release-signed.apk" "renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk"
+            echo "✅ Alternative APK file copied"
+          else
+            echo "❌ No signed APK found!"
+            exit 1
+          fi
+        fi
+        
+        # Копируем Bundle с проверкой
+        if [ -f "${{ steps.sign_bundle.outputs.signedReleaseFile }}" ]; then
+          cp "${{ steps.sign_bundle.outputs.signedReleaseFile }}" "renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.aab"
+          echo "✅ Bundle file copied successfully"
+        else
+          echo "⚠️ Signed Bundle not found at: ${{ steps.sign_bundle.outputs.signedReleaseFile }}"
+          echo "Looking for alternative Bundle file..."
+          # Поиск альтернативных файлов
+          if [ -f "app/build/outputs/bundle/release/app-release-signed.aab" ]; then
+            cp "app/build/outputs/bundle/release/app-release-signed.aab" "renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.aab"
+            echo "✅ Alternative Bundle file copied"
+          else
+            echo "❌ No signed Bundle found!"
+            exit 1
+          fi
+        fi
     
     # Загружаем release APK
     - name: Upload Release APK
