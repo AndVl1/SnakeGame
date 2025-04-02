@@ -53,9 +53,12 @@ class LeaderboardComponent(
                     is LeaderboardLabel.ShowMessage -> {
                         // TODO: Показать сообщение пользователю
                     }
-                    // Убираем обработку навигационных лейблов, так как теперь
-                    // навигация будет происходить напрямую из UI методов
-                    else -> { /* Игнорируем остальные лейблы */ }
+                    LeaderboardLabel.NavigateToGame -> {
+                        onStartGameClick.invoke()
+                    }
+                    LeaderboardLabel.NavigateToSettings -> {
+                        onSettingsClick.invoke()
+                    }
                 }
             }
             .launchIn(scope)
@@ -82,18 +85,12 @@ class LeaderboardComponent(
     
     fun onStartGameClick() {
         store.accept(LeaderboardIntent.StartGame)
-        onStartGameClick.invoke()
     }
     
     fun onSettingsClick() {
         store.accept(LeaderboardIntent.OpenSettings)
-        onSettingsClick.invoke()
     }
-    
-    fun onBackPressed() {
-        store.accept(LeaderboardIntent.BackPressed)
-    }
-    
+
     // Публичный метод для явного обновления данных лидерборда, который можно вызвать извне
     fun refreshLeaderboard() {
         store.accept(LeaderboardIntent.LoadScores)

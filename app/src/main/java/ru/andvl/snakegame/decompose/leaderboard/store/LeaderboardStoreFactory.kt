@@ -45,7 +45,6 @@ class LeaderboardStoreFactory(
                 is LeaderboardIntent.LoadScores -> loadScores()
                 is LeaderboardIntent.StartGame -> publish(LeaderboardLabel.NavigateToGame)
                 is LeaderboardIntent.OpenSettings -> publish(LeaderboardLabel.NavigateToSettings)
-                is LeaderboardIntent.BackPressed -> publish(LeaderboardLabel.NavigateBack)
             }
         }
         

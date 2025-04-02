@@ -24,8 +24,8 @@ import ru.andvl.snakegame.utils.asValue
  */
 class SettingsComponent(
     componentContext: ComponentContext,
-    private val settingsRepository: SettingsRepository,
     private val storeFactory: StoreFactory,
+    private val settingsRepository: SettingsRepository,
     private val onNavigateBack: () -> Unit,
     private val context: Context
 ) : ComponentContext by componentContext {
