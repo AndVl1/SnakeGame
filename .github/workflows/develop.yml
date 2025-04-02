@@ -1,8 +1,8 @@
-name: Release Build
+name: Develop Build
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ develop ]
 
 jobs:
   build:
@@ -86,7 +86,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     
-    - name: Determine version
+    - name: Determine develop version
       id: version
       run: |
         # Получаем последний тег релиза
@@ -101,27 +101,36 @@ jobs:
         # Удаляем префикс v из тега
         LATEST_VERSION="${LATEST_TAG#v}"
         
-        # Разбиваем на компоненты major.minor.patch
-        IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_VERSION"
-        
-        # Увеличиваем patch версию
-        PATCH=$((PATCH + 1))
-        
-        # Формируем новую версию
-        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-        echo "Версия: $NEW_VERSION"
+        # Для develop ветки используем текущую версию с суффиксом develop.X
+        DEVELOP_VERSION="${LATEST_VERSION}-develop.${{ steps.buildnumber.outputs.build_number }}"
+        echo "Develop версия: $DEVELOP_VERSION"
         
         # Выводим для использования в других шагах
-        echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "DEVELOP_VERSION=$DEVELOP_VERSION" >> $GITHUB_OUTPUT
     
     - name: Update version code and name
       run: |
         echo "Build number: ${{ steps.buildnumber.outputs.build_number }}"
-        echo "Version: ${{ steps.version.outputs.VERSION }}"
+        echo "Develop Version: ${{ steps.version.outputs.DEVELOP_VERSION }}"
         
-        # Обновляем версию в build.gradle.kts
+        # Обновляем версию в build.gradle.kts - для develop добавляем суффикс с номером билда
         sed -i "s/versionCode = .*/versionCode = ${{ steps.buildnumber.outputs.build_number }}/g" app/build.gradle.kts
-        sed -i "s/versionName = .*/versionName = \"${{ steps.version.outputs.VERSION }}\"/g" app/build.gradle.kts
+        sed -i "s/versionName = .*/versionName = \"${{ steps.version.outputs.DEVELOP_VERSION }}\"/g" app/build.gradle.kts
+    
+    # Запускаем unit-тесты с оптимизациями
+    - name: Run unit tests
+      run: ./gradlew testDebugUnitTest --build-cache --parallel --no-daemon
+      
+    # Публикуем результаты тестов
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: '**/build/test-results/**/*.xml'
+    
+    # Собираем debug-версию с оптимизациями
+    - name: Build debug APK
+      run: ./gradlew assembleDebug --build-cache --parallel --no-daemon
     
     # Настройка подписи релизной версии
     - name: Setup Android keystore
@@ -140,40 +149,40 @@ jobs:
         chmod 600 keystore.properties
         chmod 600 keystore.jks
     
-    # Для master/main собираем release-версию APK и Bundle
-    - name: Build release APK and Bundle
-      run: ./gradlew assembleRelease bundleRelease --build-cache --parallel --no-daemon
+    # Собираем release-версию с оптимизациями
+    - name: Build release APK
+      run: ./gradlew assembleRelease --build-cache --parallel --no-daemon
     
-    # Переименовываем APK и Bundle файлы, добавляя номер версии
-    - name: Rename APK and Bundle files
+    # Переименовываем APK файлы, добавляя номер версии
+    - name: Rename APK files
       run: |
         mkdir -p renamed_apk
-        cp app/build/outputs/apk/release/app-release.apk renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk
-        cp app/build/outputs/bundle/release/app-release.aab renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.aab
+        cp app/build/outputs/apk/debug/app-debug.apk renamed_apk/app-debug-${{ steps.version.outputs.DEVELOP_VERSION }}.apk
+        cp app/build/outputs/apk/release/app-release.apk renamed_apk/app-release-${{ steps.version.outputs.DEVELOP_VERSION }}.apk
     
-    # Загружаем release APK
-    - name: Upload Release APK
+    # Загружаем debug APK
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-release-${{ steps.version.outputs.VERSION }}
-        path: renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk
-        retention-days: 90
+        name: app-debug-${{ steps.version.outputs.DEVELOP_VERSION }}
+        path: renamed_apk/app-debug-${{ steps.version.outputs.DEVELOP_VERSION }}.apk
+        retention-days: 30
         if-no-files-found: error
         overwrite: true
         compression-level: 0
         content-type: application/vnd.android.package-archive
     
-    # Загружаем release AAB
-    - name: Upload Release Bundle
+    # Загружаем release APK
+    - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-release-bundle-${{ steps.version.outputs.VERSION }}
-        path: renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.aab
-        retention-days: 90
+        name: app-release-${{ steps.version.outputs.DEVELOP_VERSION }}
+        path: renamed_apk/app-release-${{ steps.version.outputs.DEVELOP_VERSION }}.apk
+        retention-days: 30
         if-no-files-found: error
         overwrite: true
         compression-level: 0
-        content-type: application/octet-stream
+        content-type: application/vnd.android.package-archive
     
     # Расчет времени сборки
     - name: Calculate build time
@@ -195,30 +204,29 @@ jobs:
         
         echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
     
-    # Создаем релиз с переименованным APK
+    # Создаем релиз с переименованными APK
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:
-        artifacts: "renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk,renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.aab"
+        artifacts: "renamed_apk/app-debug-${{ steps.version.outputs.DEVELOP_VERSION }}.apk,renamed_apk/app-release-${{ steps.version.outputs.DEVELOP_VERSION }}.apk"
         token: ${{ secrets.GITHUB_TOKEN }}
-        tag: v${{ steps.version.outputs.VERSION }}
-        name: Release v${{ steps.version.outputs.VERSION }}
+        tag: develop-${{ steps.buildnumber.outputs.build_number }}
+        name: Develop Build ${{ steps.version.outputs.DEVELOP_VERSION }}
         body: |
-          Автоматическая релизная сборка из ветки master
+          Автоматическая сборка из ветки develop
           
           Номер сборки: ${{ steps.buildnumber.outputs.build_number }}
-          Версия: ${{ steps.version.outputs.VERSION }}
+          Версия: ${{ steps.version.outputs.DEVELOP_VERSION }}
           Коммит: ${{ github.sha }}
           
           В релизе:
-          - APK файл для установки на устройство
-          - AAB файл для загрузки в Google Play
+          - Debug APK для тестирования
+          - Release APK с подписью для расширенного тестирования
           
-          Примечание: Эта сборка использует релизную конфигурацию с официальной подписью.
           Время сборки: ${{ steps.build-time.outputs.build_time }}
         draft: false
-        prerelease: false
-        makeLatest: true
+        prerelease: true
+        makeLatest: false
     
     # Очистка кэшей в редких случаях
     - name: Cleanup Gradle Cache
