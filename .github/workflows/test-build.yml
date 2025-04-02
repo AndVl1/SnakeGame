@@ -1,0 +1,220 @@
+name: Test Build
+
+on:
+  workflow_dispatch:  # Ручной запуск через интерфейс GitHub
+  push:
+    branches:
+      - 'feature/**'
+      - 'bugfix/**' 
+      - 'hotfix/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches-ignore:
+      - 'master'
+      - 'main'
+      - 'develop'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    # Сохраняем время начала сборки
+    - name: Set build start time
+      id: build-time-start
+      run: echo "BUILD_START=$(date +%s)" >> $GITHUB_OUTPUT
+    
+    - name: Generate build number
+      id: buildnumber
+      uses: onyxmueller/build-tag-number@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        prefix: 'test'
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    
+    # Установка Android SDK Build Tools
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+#      with:
+#        cmdline-tools-version: '8.0'
+#        packages: 'build-tools;33.0.0,build-tools;30.0.3,platforms;android-35'
+
+    # Кэширование Gradle Wrapper
+    - name: Cache Gradle Wrapper
+      uses: actions/cache@v3
+      with:
+        path: ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-wrapper-
+    
+    # Кэширование зависимостей Gradle
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/daemon
+          ~/.gradle/native
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    
+    # Кэширование Maven репозитория
+    - name: Cache Maven repository
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/build.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    
+    # Кэширование Android SDK
+    - name: Cache Android SDK
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ env.ANDROID_HOME }}
+          ~/.android/cache
+        key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/build.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-android-sdk-
+    
+    # Кэширование результатов сборки
+    - name: Cache Build results
+      uses: actions/cache@v3
+      with:
+        path: app/build
+        key: ${{ runner.os }}-app-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-app-build-
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    # Формируем имя тестовой сборки
+    - name: Set test version info
+      id: version
+      run: |
+        BRANCH_NAME=$(git branch --show-current)
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        TEST_VERSION="test-${BRANCH_NAME}-${COMMIT_HASH}-build.${{ steps.buildnumber.outputs.build_number }}"
+        echo "Test версия: $TEST_VERSION"
+        echo "TEST_VERSION=$TEST_VERSION" >> $GITHUB_OUTPUT
+    
+    # Собираем debug-версию с оптимизациями
+    - name: Build debug APK
+      run: ./gradlew assembleDebug --build-cache --parallel --no-daemon
+    
+    # Подписываем debug APK
+    - name: Sign Debug APK
+      id: sign_debug_apk
+      uses: r0adkll/sign-android-release@v1
+      env:
+        BUILD_TOOLS_VERSION: "33.0.0"
+      with:
+        releaseDirectory: app/build/outputs/apk/debug
+        signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        alias: ${{ secrets.KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+    
+    # Переименовываем APK файл, добавляя информацию о версии
+    - name: Rename APK file
+      run: |
+        mkdir -p renamed_apk
+        cp ${{ steps.sign_debug_apk.outputs.signedReleaseFile }} renamed_apk/app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}.apk
+    
+    # Загружаем подписанный debug APK
+    - name: Upload Signed Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}
+        path: renamed_apk/app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}.apk
+        retention-days: 7
+        if-no-files-found: error
+        overwrite: true
+        compression-level: 0
+        content-type: application/vnd.android.package-archive
+    
+    # Расчет времени сборки
+    - name: Calculate build time
+      id: build-time
+      run: |
+        END_TIME=$(date +%s)
+        START_TIME=${{ steps.build-time-start.outputs.BUILD_START }}
+        DURATION=$((END_TIME - START_TIME))
+        
+        # Форматируем время в минуты и секунды
+        MINUTES=$((DURATION / 60))
+        SECONDS=$((DURATION % 60))
+        
+        if [ $MINUTES -gt 0 ]; then
+          BUILD_TIME="${MINUTES}м ${SECONDS}с"
+        else
+          BUILD_TIME="${SECONDS}с"
+        fi
+        
+        echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
+        
+    # Публикуем комментарий с результатами сборки
+    - name: Add build summary
+      run: |
+        echo "### 🚀 Тестовая сборка завершена" >> $GITHUB_STEP_SUMMARY
+        echo "**Версия:** ${{ steps.version.outputs.TEST_VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Время сборки:** ${{ steps.build-time.outputs.build_time }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Артефакт:** app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit SHA:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Runid:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+    
+    # Добавляем комментарий к PR, если сборка запущена через PR
+    - name: Find Comment
+      if: github.event_name == 'pull_request'
+      uses: peter-evans/find-comment@v2
+      id: fc
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: Test Build
+
+    - name: Create or update comment with APK link
+      if: github.event_name == 'pull_request'
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          ### 🚀 Test Build для PR
+          
+          Тестовая сборка **${{ steps.version.outputs.TEST_VERSION }}** готова ✅
+          
+          [Скачать подписанный Debug APK](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          *Артефакт: `app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}`*
+          
+          **Время сборки:** ${{ steps.build-time.outputs.build_time }}
+        edit-mode: replace
+        reactions: rocket
+    
+    # Очистка кэшей в редких случаях
+    - name: Cleanup Gradle Cache
+      # Запускается только по условию, например, еженедельно
+      if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * 0'
+      run: |
+        rm -rf ~/.gradle/caches/modules-2/modules-2.lock
+        rm -rf ~/.gradle/caches/transforms-1
+        rm -rf ~/.gradle/caches/journal-1
+        rm -rf ~/.gradle/caches/jars-3 
