@@ -42,19 +42,26 @@ jobs:
       with:
         files: '**/build/test-results/**/*.xml'
     
-    - name: Get current version
+    - name: Determine PR version
       id: version
       run: |
-        # Читаем текущие версии из файла
-        MAJOR=$(cat .github/version.json | jq '.major')
-        MINOR=$(cat .github/version.json | jq '.minor')
-        PATCH=$(cat .github/version.json | jq '.patch')
+        # Получаем последний тег релиза
+        git fetch --tags
+        LATEST_TAG=$(git tag -l 'v*' --sort=-v:refname | head -n 1 || echo "v1.0.0")
         
-        # Формируем версию для PR (патч-версия та же, что и в main + PR suffix)
-        PR_VERSION="$MAJOR.$MINOR.$PATCH-build.${{ steps.buildnumber.outputs.build_number }}"
+        # Если тега нет, начинаем с версии 1.0.0
+        if [ -z "$LATEST_TAG" ]; then
+          LATEST_TAG="v1.0.0"
+        fi
+        
+        # Удаляем префикс v из тега
+        LATEST_VERSION="${LATEST_TAG#v}"
+        
+        # Для PR используем текущую версию с суффиксом build.X
+        PR_VERSION="${LATEST_VERSION}-build.${{ steps.buildnumber.outputs.build_number }}"
         echo "PR версия: $PR_VERSION"
         
-        # Устанавливаем выходную переменную
+        # Выводим для использования в других шагах
         echo "PR_VERSION=$PR_VERSION" >> $GITHUB_OUTPUT
     
     - name: Update version code and name
