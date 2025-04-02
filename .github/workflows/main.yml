@@ -33,6 +33,13 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
+    # Установка Android SDK Build Tools
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        cmdline-tools-version: '8.0'
+        packages: 'build-tools;33.0.0,build-tools;30.0.3,platforms;android-35'
+
     # Кэширование Gradle Wrapper
     - name: Cache Gradle Wrapper
       uses: actions/cache@v3
@@ -122,7 +129,7 @@ jobs:
         # Обновляем версию в build.gradle.kts
         sed -i "s/versionCode = .*/versionCode = ${{ steps.buildnumber.outputs.build_number }}/g" app/build.gradle.kts
         sed -i "s/versionName = .*/versionName = \"${{ steps.version.outputs.VERSION }}\"/g" app/build.gradle.kts
-    
+
     # Для master/main собираем release-версию APK и Bundle
     - name: Build release APK and Bundle
       run: ./gradlew assembleRelease bundleRelease --build-cache --parallel --no-daemon
@@ -131,24 +138,28 @@ jobs:
     - name: Sign APK
       id: sign_apk
       uses: r0adkll/sign-android-release@v1
+      env:
+        BUILD_TOOLS_VERSION: "33.0.0"
       with:
         releaseDirectory: app/build/outputs/apk/release
         signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
         alias: ${{ secrets.KEY_ALIAS }}
         keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
         keyPassword: ${{ secrets.KEY_PASSWORD }}
-    
+
     # Подписываем релизные AAB файлы
     - name: Sign Bundle
       id: sign_bundle
       uses: r0adkll/sign-android-release@v1
+      env:
+        BUILD_TOOLS_VERSION: "33.0.0"
       with:
         releaseDirectory: app/build/outputs/bundle/release
         signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
         alias: ${{ secrets.KEY_ALIAS }}
         keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
         keyPassword: ${{ secrets.KEY_PASSWORD }}
-    
+
     # Переименовываем APK и Bundle файлы, добавляя номер версии
     - name: Rename APK and Bundle files
       run: |
