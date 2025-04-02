@@ -132,33 +132,27 @@ jobs:
     - name: Build debug APK
       run: ./gradlew assembleDebug --build-cache --parallel --no-daemon
     
-    # Настройка подписи релизной версии
-    - name: Setup Android keystore
-      run: |
-        echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
-        
-        # Создаем keystore.properties для сборки
-        cat << EOF > keystore.properties
-        storeFile=../keystore.jks
-        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-        keyAlias=${{ secrets.KEY_ALIAS }}
-        keyPassword=${{ secrets.KEY_PASSWORD }}
-        EOF
-        
-        # Изменяем права доступа
-        chmod 600 keystore.properties
-        chmod 600 keystore.jks
-    
     # Собираем release-версию с оптимизациями
     - name: Build release APK
       run: ./gradlew assembleRelease --build-cache --parallel --no-daemon
+    
+    # Подписываем релизные APK файлы
+    - name: Sign Release APK
+      id: sign_apk
+      uses: r0adkll/sign-android-release@v1
+      with:
+        releaseDirectory: app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        alias: ${{ secrets.KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
     
     # Переименовываем APK файлы, добавляя номер версии
     - name: Rename APK files
       run: |
         mkdir -p renamed_apk
         cp app/build/outputs/apk/debug/app-debug.apk renamed_apk/app-debug-${{ steps.version.outputs.DEVELOP_VERSION }}.apk
-        cp app/build/outputs/apk/release/app-release.apk renamed_apk/app-release-${{ steps.version.outputs.DEVELOP_VERSION }}.apk
+        cp ${{ steps.sign_apk.outputs.signedReleaseFile }} renamed_apk/app-release-${{ steps.version.outputs.DEVELOP_VERSION }}.apk
     
     # Загружаем debug APK
     - name: Upload Debug APK
