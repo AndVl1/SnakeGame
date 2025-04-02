@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     
     steps:
     - name: Checkout code
@@ -42,6 +43,9 @@ jobs:
 
     # Кэширование Gradle Wrapper
     - name: Cache Gradle Wrapper
+      id: cache-gradle-wrapper
+      continue-on-error: true
+      timeout-minutes: 5
       uses: actions/cache@v3
       with:
         path: ~/.gradle/wrapper
@@ -51,6 +55,9 @@ jobs:
     
     # Кэширование зависимостей Gradle
     - name: Cache Gradle dependencies
+      id: cache-gradle-deps
+      continue-on-error: true
+      timeout-minutes: 10
       uses: actions/cache@v3
       with:
         path: |
@@ -63,6 +70,9 @@ jobs:
     
     # Кэширование Maven репозитория
     - name: Cache Maven repository
+      id: cache-maven
+      continue-on-error: true
+      timeout-minutes: 8
       uses: actions/cache@v3
       with:
         path: ~/.m2/repository
@@ -72,6 +82,9 @@ jobs:
     
     # Кэширование Android SDK
     - name: Cache Android SDK
+      id: cache-android-sdk
+      continue-on-error: true
+      timeout-minutes: 15
       uses: actions/cache@v3
       with:
         path: |
@@ -83,6 +96,9 @@ jobs:
     
     # Кэширование результатов сборки
     - name: Cache Build results
+      id: cache-build
+      continue-on-error: true
+      timeout-minutes: 12
       uses: actions/cache@v3
       with:
         path: app/build
