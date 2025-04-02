@@ -1,0 +1,108 @@
+name: Release Build
+
+on:
+  push:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Generate build number
+      id: buildnumber
+      uses: onyxmueller/build-tag-number@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        prefix: 'android'
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    - name: Update version number
+      id: version
+      run: |
+        # Читаем текущие версии
+        MAJOR=$(cat .github/version.json | jq '.major')
+        MINOR=$(cat .github/version.json | jq '.minor')
+        PATCH=$(cat .github/version.json | jq '.patch')
+        
+        # Увеличиваем patch версию
+        PATCH=$((PATCH + 1))
+        
+        # Сохраняем обновленные версии в файл
+        echo "{\"major\": $MAJOR, \"minor\": $MINOR, \"patch\": $PATCH}" > .github/version.json
+        
+        # Формируем полную версию
+        VERSION="$MAJOR.$MINOR.$PATCH"
+        echo "Новая версия: $VERSION"
+        
+        # Устанавливаем выходную переменную для использования в других шагах
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Update version code and name
+      run: |
+        echo "Build number: ${{ steps.buildnumber.outputs.build_number }}"
+        echo "Version: ${{ steps.version.outputs.VERSION }}"
+        
+        # Обновляем версию в build.gradle.kts
+        sed -i "s/versionCode = .*/versionCode = ${{ steps.buildnumber.outputs.build_number }}/g" app/build.gradle.kts
+        sed -i "s/versionName = .*/versionName = \"${{ steps.version.outputs.VERSION }}\"/g" app/build.gradle.kts
+    
+    # Коммитим обновление версии обратно в репозиторий
+    - name: Commit version update
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        git add .github/version.json
+        git commit -m "Bump version to ${{ steps.version.outputs.VERSION }} [skip ci]" || echo "No changes to commit"
+        git push
+    
+    # Для master/main собираем release-версию
+    - name: Build release APK
+      run: ./gradlew assembleRelease
+    
+    # Переименовываем APK файлы, добавляя номер версии
+    - name: Rename APK files
+      run: |
+        mkdir -p renamed_apk
+        cp app/build/outputs/apk/release/app-release.apk renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk
+    
+    # Загружаем release APK
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-${{ steps.version.outputs.VERSION }}
+        path: renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk
+    
+    # Создаем релиз с переименованным APK
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: v${{ steps.version.outputs.VERSION }}
+        name: Release v${{ steps.version.outputs.VERSION }}
+        body: |
+          Автоматическая релизная сборка из ветки master
+          
+          Номер сборки: ${{ steps.buildnumber.outputs.build_number }}
+          Версия: ${{ steps.version.outputs.VERSION }}
+          Коммит: ${{ github.sha }}
+          
+          Примечание: Эта сборка использует релизную конфигурацию с дебажной подписью.
+        draft: false
+        prerelease: false
+        makeLatest: true 

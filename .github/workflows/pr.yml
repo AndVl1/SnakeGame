@@ -1,0 +1,111 @@
+name: Pull Request Build
+
+on:
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Generate build number
+      id: buildnumber
+      uses: onyxmueller/build-tag-number@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        prefix: 'android'
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    # Запускаем unit-тесты
+    - name: Run unit tests
+      run: ./gradlew testDebugUnitTest
+      
+    # Публикуем результаты тестов
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: '**/build/test-results/**/*.xml'
+    
+    - name: Get current version
+      id: version
+      run: |
+        # Читаем текущие версии из файла
+        MAJOR=$(cat .github/version.json | jq '.major')
+        MINOR=$(cat .github/version.json | jq '.minor')
+        PATCH=$(cat .github/version.json | jq '.patch')
+        
+        # Формируем версию для PR (патч-версия та же, что и в main + PR suffix)
+        PR_VERSION="$MAJOR.$MINOR.$PATCH-build.${{ steps.buildnumber.outputs.build_number }}"
+        echo "PR версия: $PR_VERSION"
+        
+        # Устанавливаем выходную переменную
+        echo "PR_VERSION=$PR_VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Update version code and name
+      run: |
+        echo "Build number: ${{ steps.buildnumber.outputs.build_number }}"
+        echo "PR Version: ${{ steps.version.outputs.PR_VERSION }}"
+        
+        # Обновляем версию в build.gradle.kts - для PR добавляем суффикс с номером билда
+        sed -i "s/versionCode = .*/versionCode = ${{ steps.buildnumber.outputs.build_number }}/g" app/build.gradle.kts
+        sed -i "s/versionName = .*/versionName = \"${{ steps.version.outputs.PR_VERSION }}\"/g" app/build.gradle.kts
+    
+    # Собираем debug-версию
+    - name: Build debug APK
+      run: ./gradlew assembleDebug
+    
+    # Переименовываем APK файл с учетом версии для PR
+    - name: Rename APK file
+      run: |
+        mkdir -p renamed_apk
+        cp app/build/outputs/apk/debug/app-debug.apk renamed_apk/app-debug-${{ steps.version.outputs.PR_VERSION }}.apk
+    
+    # Загружаем debug APK
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-${{ steps.buildnumber.outputs.build_number }}
+        path: renamed_apk/app-debug-${{ steps.version.outputs.PR_VERSION }}.apk
+        
+    # Добавляем APK в комментарий к PR
+    - name: Find Comment
+      uses: peter-evans/find-comment@v2
+      id: fc
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: Debug APK
+
+    - name: Create or update comment with APK link
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          ### Debug APK для тестирования
+          
+          Сборка версии **${{ steps.version.outputs.PR_VERSION }}** готова ✅
+          
+          [Скачать APK](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          *Артефакт: `app-debug-${{ steps.buildnumber.outputs.build_number }}`*
+          
+          **Результаты тестов:** ${{ job.status == 'success' && '✅ Все тесты пройдены' || '❌ Некоторые тесты не прошли' }}
+        edit-mode: replace
+        reactions: rocket 
