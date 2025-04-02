@@ -14,6 +14,11 @@ jobs:
       with:
         fetch-depth: 0
     
+    # Сохраняем время начала сборки
+    - name: Set build start time
+      id: build-time-start
+      run: echo "BUILD_START=$(date +%s)" >> $GITHUB_OUTPUT
+    
     - name: Generate build number
       id: buildnumber
       uses: onyxmueller/build-tag-number@v1
@@ -28,12 +33,62 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
+    # Кэширование Gradle Wrapper
+    - name: Cache Gradle Wrapper
+      uses: actions/cache@v3
+      with:
+        path: ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-wrapper-
+    
+    # Кэширование зависимостей Gradle
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/daemon
+          ~/.gradle/native
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    
+    # Кэширование Maven репозитория
+    - name: Cache Maven repository
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/build.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    
+    # Кэширование Android SDK
+    - name: Cache Android SDK
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ env.ANDROID_HOME }}
+          ~/.android/cache
+        key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/build.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-android-sdk-
+    
+    # Кэширование результатов сборки
+    - name: Cache Build results
+      uses: actions/cache@v3
+      with:
+        path: app/build
+        key: ${{ runner.os }}-app-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-app-build-
+    
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     
-    # Запускаем unit-тесты
+    # Запускаем unit-тесты с оптимизациями
     - name: Run unit tests
-      run: ./gradlew testDebugUnitTest
+      run: ./gradlew testDebugUnitTest --build-cache --parallel --no-daemon
       
     # Публикуем результаты тестов
     - name: Publish Unit Test Results
@@ -73,9 +128,9 @@ jobs:
         sed -i "s/versionCode = .*/versionCode = ${{ steps.buildnumber.outputs.build_number }}/g" app/build.gradle.kts
         sed -i "s/versionName = .*/versionName = \"${{ steps.version.outputs.PR_VERSION }}\"/g" app/build.gradle.kts
     
-    # Собираем debug-версию
+    # Собираем debug-версию с оптимизациями
     - name: Build debug APK
-      run: ./gradlew assembleDebug
+      run: ./gradlew assembleDebug --build-cache --parallel --no-daemon
     
     # Переименовываем APK файл с учетом версии для PR
     - name: Rename APK file
@@ -87,8 +142,33 @@ jobs:
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug-${{ steps.buildnumber.outputs.build_number }}
+        name: app-debug-${{ steps.version.outputs.PR_VERSION }}
         path: renamed_apk/app-debug-${{ steps.version.outputs.PR_VERSION }}.apk
+        retention-days: 90
+        if-no-files-found: error
+        overwrite: true
+        compression-level: 0
+        content-type: application/vnd.android.package-archive
+        
+    # Расчет времени сборки
+    - name: Calculate build time
+      id: build-time
+      run: |
+        END_TIME=$(date +%s)
+        START_TIME=${{ steps.build-time-start.outputs.BUILD_START }}
+        DURATION=$((END_TIME - START_TIME))
+        
+        # Форматируем время в минуты и секунды
+        MINUTES=$((DURATION / 60))
+        SECONDS=$((DURATION % 60))
+        
+        if [ $MINUTES -gt 0 ]; then
+          BUILD_TIME="${MINUTES}м ${SECONDS}с"
+        else
+          BUILD_TIME="${SECONDS}с"
+        fi
+        
+        echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
         
     # Добавляем APK в комментарий к PR
     - name: Find Comment
@@ -111,8 +191,20 @@ jobs:
           
           [Скачать APK](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           
-          *Артефакт: `app-debug-${{ steps.buildnumber.outputs.build_number }}`*
+          *Артефакт: `app-debug-${{ steps.version.outputs.PR_VERSION }}`*
           
           **Результаты тестов:** ${{ job.status == 'success' && '✅ Все тесты пройдены' || '❌ Некоторые тесты не прошли' }}
+          
+          **Время сборки:** ${{ steps.build-time.outputs.build_time || 'Н/Д' }}
         edit-mode: replace
-        reactions: rocket 
+        reactions: rocket
+        
+    # Очистка кэшей в редких случаях
+    - name: Cleanup Gradle Cache
+      # Запускается только по условию, например, еженедельно
+      if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * 0'
+      run: |
+        rm -rf ~/.gradle/caches/modules-2/modules-2.lock
+        rm -rf ~/.gradle/caches/transforms-1
+        rm -rf ~/.gradle/caches/journal-1
+        rm -rf ~/.gradle/caches/jars-3 
