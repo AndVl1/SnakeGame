@@ -123,33 +123,38 @@ jobs:
         sed -i "s/versionCode = .*/versionCode = ${{ steps.buildnumber.outputs.build_number }}/g" app/build.gradle.kts
         sed -i "s/versionName = .*/versionName = \"${{ steps.version.outputs.VERSION }}\"/g" app/build.gradle.kts
     
-    # Настройка подписи релизной версии
-    - name: Setup Android keystore
-      run: |
-        echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
-        
-        # Создаем keystore.properties для сборки
-        cat << EOF > keystore.properties
-        storeFile=../keystore.jks
-        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-        keyAlias=${{ secrets.KEY_ALIAS }}
-        keyPassword=${{ secrets.KEY_PASSWORD }}
-        EOF
-        
-        # Изменяем права доступа
-        chmod 600 keystore.properties
-        chmod 600 keystore.jks
-    
     # Для master/main собираем release-версию APK и Bundle
     - name: Build release APK and Bundle
       run: ./gradlew assembleRelease bundleRelease --build-cache --parallel --no-daemon
+    
+    # Подписываем релизные APK файлы
+    - name: Sign APK
+      id: sign_apk
+      uses: r0adkll/sign-android-release@v1
+      with:
+        releaseDirectory: app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        alias: ${{ secrets.KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+    
+    # Подписываем релизные AAB файлы
+    - name: Sign Bundle
+      id: sign_bundle
+      uses: r0adkll/sign-android-release@v1
+      with:
+        releaseDirectory: app/build/outputs/bundle/release
+        signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        alias: ${{ secrets.KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
     
     # Переименовываем APK и Bundle файлы, добавляя номер версии
     - name: Rename APK and Bundle files
       run: |
         mkdir -p renamed_apk
-        cp app/build/outputs/apk/release/app-release.apk renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk
-        cp app/build/outputs/bundle/release/app-release.aab renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.aab
+        cp ${{ steps.sign_apk.outputs.signedReleaseFile }} renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.apk
+        cp ${{ steps.sign_bundle.outputs.signedReleaseFile }} renamed_apk/app-release-${{ steps.version.outputs.VERSION }}.aab
     
     # Загружаем release APK
     - name: Upload Release APK
