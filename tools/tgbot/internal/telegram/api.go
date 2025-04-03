@@ -240,12 +240,19 @@ func (t *API) EditMessageText(chatID int64, messageID int, text string, keyboard
 		message.ReplyMarkup = types.InlineKeyboardMarkup{
 			InlineKeyboard: keyboard,
 		}
+	} else {
+		message.ReplyMarkup = types.InlineKeyboardMarkup{
+			InlineKeyboard: [][]types.InlineKeyboardButton{},
+		}
 	}
 
 	body, err := json.Marshal(message)
 	if err != nil {
 		return fmt.Errorf("ошибка маршалинга запроса: %w", err)
 	}
+
+	// Логируем тело запроса для отладки
+	fmt.Printf("Отправляем запрос: %s\n", string(body))
 
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(body)))
 	if err != nil {

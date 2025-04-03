@@ -27,7 +27,14 @@ jobs:
       - name: Check for Go changes
         id: check
         run: |
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref || github.event.before }} HEAD)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Для pull request используем origin/
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
+          else
+            # Для push используем прямой коммит
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} HEAD)
+          fi
+          
           if echo "$CHANGED_FILES" | grep -qE '^(tools/tgbot/|\.github/workflows/go\.yml)'; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
