@@ -34,8 +34,22 @@ jobs:
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
 
-  build-go:
+  verify-go:
     needs: check-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Go project
+        run: |
+          if [ "${{ needs.check-changes.outputs.has_changes }}" == "true" ]; then
+            echo "Go project changes detected, skipping verification"
+            exit 0
+          else
+            echo "No Go project changes, verification passed"
+            exit 0
+          fi
+
+  build-go:
+    needs: [check-changes, verify-go]
     if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     defaults:
