@@ -1,4 +1,4 @@
-// Package telegram предоставляет функционал для работы с Telegram Bot API
+// Package telegram предоставляет функциональность для работы с Telegram Bot API.
 package telegram
 
 import (
@@ -39,6 +39,11 @@ func NewAPI(token string) *API {
 
 // SendMessage отправляет сообщение в указанный чат
 func (t *API) SendMessage(chatID int64, text string, keyboard [][]types.InlineKeyboardButton) error {
+	// Проверяем, что baseURL не содержит опасных символов
+	if !strings.HasPrefix(t.baseURL, "https://api.telegram.org/bot") {
+		return fmt.Errorf("небезопасный URL для Telegram API")
+	}
+
 	url := fmt.Sprintf("%s/sendMessage", t.baseURL)
 
 	message := types.SendMessageRequest{
@@ -69,12 +74,16 @@ func (t *API) SendMessage(chatID int64, text string, keyboard [][]types.InlineKe
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("ошибка чтения тела ответа: %w", err)
+		}
 		return fmt.Errorf("неуспешный статус ответа: %d, тело: %s", resp.StatusCode, string(body))
 	}
 
 	var response types.Response
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&response); err != nil {
 		return fmt.Errorf("ошибка декодирования ответа: %w", err)
 	}
 
@@ -87,6 +96,11 @@ func (t *API) SendMessage(chatID int64, text string, keyboard [][]types.InlineKe
 
 // AnswerCallbackQuery отвечает на callback-запрос
 func (t *API) AnswerCallbackQuery(callbackQueryID string, text string) error {
+	// Проверяем, что baseURL не содержит опасных символов
+	if !strings.HasPrefix(t.baseURL, "https://api.telegram.org/bot") {
+		return fmt.Errorf("небезопасный URL для Telegram API")
+	}
+
 	url := fmt.Sprintf("%s/answerCallbackQuery", t.baseURL)
 
 	message := types.AnswerCallbackQueryRequest{
@@ -110,12 +124,16 @@ func (t *API) AnswerCallbackQuery(callbackQueryID string, text string) error {
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("ошибка чтения тела ответа: %w", err)
+		}
 		return fmt.Errorf("неуспешный статус ответа: %d, тело: %s", resp.StatusCode, string(body))
 	}
 
 	var response types.Response
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&response); err != nil {
 		return fmt.Errorf("ошибка декодирования ответа: %w", err)
 	}
 
@@ -128,6 +146,11 @@ func (t *API) AnswerCallbackQuery(callbackQueryID string, text string) error {
 
 // EditMessageText редактирует текст сообщения
 func (t *API) EditMessageText(chatID int64, messageID int, text string, keyboard [][]types.InlineKeyboardButton) error {
+	// Проверяем, что baseURL не содержит опасных символов
+	if !strings.HasPrefix(t.baseURL, "https://api.telegram.org/bot") {
+		return fmt.Errorf("небезопасный URL для Telegram API")
+	}
+
 	url := fmt.Sprintf("%s/editMessageText", t.baseURL)
 
 	message := types.EditMessageTextRequest{
@@ -159,12 +182,16 @@ func (t *API) EditMessageText(chatID int64, messageID int, text string, keyboard
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("ошибка чтения тела ответа: %w", err)
+		}
 		return fmt.Errorf("неуспешный статус ответа: %d, тело: %s", resp.StatusCode, string(body))
 	}
 
 	var response types.Response
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&response); err != nil {
 		return fmt.Errorf("ошибка декодирования ответа: %w", err)
 	}
 

@@ -1,14 +1,58 @@
-// Package main предоставляет точку входа для Telegram бота,
-// который управляет релизами GitHub проекта
+// Package main содержит основной код Telegram бота для управления релизами.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/your-project/api"
 	"github.com/your-project/types"
 )
+
+// loadConfig загружает конфигурацию из файла
+func loadConfig(configPath string) (*types.Config, error) {
+	// Проверяем, что путь абсолютный и не содержит опасных символов
+	absPath, err := filepath.Abs(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения абсолютного пути: %w", err)
+	}
+	
+	// Проверяем, что путь не содержит опасных символов
+	if strings.Contains(absPath, "..") || strings.Contains(absPath, "//") {
+		return nil, fmt.Errorf("небезопасный путь к файлу конфигурации")
+	}
+
+	// Проверяем, что файл существует и является обычным файлом
+	fileInfo, err := os.Stat(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка проверки файла конфигурации: %w", err)
+	}
+	if !fileInfo.Mode().IsRegular() {
+		return nil, fmt.Errorf("файл конфигурации не является обычным файлом")
+	}
+
+	// Проверяем права доступа к файлу
+	if fileInfo.Mode().Perm()&0077 != 0 {
+		return nil, fmt.Errorf("небезопасные права доступа к файлу конфигурации")
+	}
+
+	// Читаем файл
+	configData, err := os.ReadFile(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка чтения файла конфигурации: %w", err)
+	}
+
+	var config types.Config
+	if err := json.Unmarshal(configData, &config); err != nil {
+		return nil, fmt.Errorf("ошибка разбора JSON: %w", err)
+	}
+
+	return &config, nil
+}
 
 func showHelp(chatID int64) error {
 	helpText := `*🤖 Помощник по релизам*
@@ -46,7 +90,7 @@ func showHelp(chatID int64) error {
 	}
 
 	if err := api.SendMessage(chatID, helpText, keyboard); err != nil {
-		return fmt.Errorf("ошибка отправки сообщения помощи: %w", err)
+		fmt.Printf("Ошибка отправки сообщения помощи: %v\n", err)
 	}
 
 	return nil

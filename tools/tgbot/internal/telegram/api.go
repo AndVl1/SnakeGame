@@ -269,26 +269,3 @@ func (t *API) EditMessageText(chatID int64, messageID int, text string, keyboard
 
 	return nil
 }
-
-// sendRequest отправляет запрос к Telegram API
-func (t *API) sendRequest(method string, payload map[string]interface{}) error {
-	url := fmt.Sprintf("%s/%s", t.baseURL, method)
-
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("ошибка маршалинга JSON: %v", err)
-	}
-
-	resp, err := t.httpClient.Post(url, "application/json", strings.NewReader(string(jsonData)))
-	if err != nil {
-		return fmt.Errorf("ошибка отправки запроса: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("неуспешный статус ответа: %d, тело: %s", resp.StatusCode, string(body))
-	}
-
-	return nil
-}

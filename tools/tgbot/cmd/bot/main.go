@@ -140,7 +140,9 @@ func showHelp(chatID int64) {
 		},
 	}
 
-	api.SendMessage(chatID, helpText, keyboard)
+	if err := api.SendMessage(chatID, helpText, keyboard); err != nil {
+		log.Printf("Ошибка отправки сообщения помощи: %v", err)
+	}
 }
 
 func handleCallback(callback *types.CallbackQuery) {
