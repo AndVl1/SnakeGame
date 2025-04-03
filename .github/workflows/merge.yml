@@ -64,13 +64,13 @@ jobs:
       run: |
         gh pr create \
           --title "Merge develop into main" \
-          --body "Автоматическое создание PR для слияния ветки develop в main
+          --body "Автоматическое создание PR для слияния ветки develop в main \
 
-Создано через GitHub Actions
+          Создано через GitHub Actions \
 
-## Коммиты для слияния:
+          ## Коммиты для слияния: \
 
-${{ steps.get-commits.outputs.COMMITS }}" \
+          ${{ steps.get-commits.outputs.COMMITS }}" \
           --base main \
           --head release/develop-to-main
         
