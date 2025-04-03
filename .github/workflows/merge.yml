@@ -36,7 +36,7 @@ jobs:
     - name: Notify Telegram
       uses: appleboy/telegram-action@master
       with:
-        to: ${{ secrets.TG_CHAT_IDS }}
+        to: ${{ secrets.TG_CHAT }}
         token: ${{ secrets.TG_KEY }}
         message: |
           🔄 Запущен процесс создания нового релиза
@@ -46,3 +46,18 @@ jobs:
           Ссылка на коммит: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
           
           Ожидайте завершения сборки релиза... 
+
+    - name: Notify Error to Telegram
+      if: failure()
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TG_CHAT }}
+        token: ${{ secrets.TG_KEY }}
+        message: |
+          ❌ Ошибка при создании релиза
+          
+          Не удалось смержить ветку develop в main
+          
+          Ссылка на коммит: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          
+          Пожалуйста, проверьте логи и исправьте ошибку. 

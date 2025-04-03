@@ -267,8 +267,29 @@ func handleReleaseCommand(callback *types.CallbackQuery) {
 		return
 	}
 
-	// TODO: Реализовать запуск пайплайна через GitHub API
-	if err := api.EditMessageText(callback.ChatID, callback.MessageID, "✅ Пайплайн создания релиза успешно запущен!\nОжидайте уведомления о завершении.", nil); err != nil {
+	// Создаем клиент GitHub
+	client := github.NewClient(config.GitHubToken, fmt.Sprintf("%s/%s", config.GitHubOwner, config.GitHubRepo))
+
+	// Запускаем пайплайн
+	if err := client.TriggerWorkflow("merge.yml"); err != nil {
+		log.Printf("Ошибка запуска пайплайна: %v", err)
+		if err := api.ShowAlert(callback.ID, "❌ Ошибка: пайплайн не настроен для ручного запуска"); err != nil {
+			log.Printf("Ошибка отправки алерта: %v", err)
+		}
+		return
+	}
+
+	// Добавляем кнопку "Назад"
+	keyboard := [][]types.InlineKeyboardButton{
+		{
+			{
+				Text:         "◀️ Назад",
+				CallbackData: "back_to_main",
+			},
+		},
+	}
+
+	if err := api.EditMessageText(callback.ChatID, callback.MessageID, "✅ Пайплайн создания релиза успешно запущен!\nОжидайте уведомления о завершении.", keyboard); err != nil {
 		log.Printf("Ошибка редактирования сообщения: %v", err)
 	}
 }

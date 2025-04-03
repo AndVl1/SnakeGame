@@ -276,3 +276,41 @@ func (t *API) EditMessageText(chatID int64, messageID int, text string, keyboard
 
 	return nil
 }
+
+// ShowAlert показывает alert dialog в Telegram
+func (t *API) ShowAlert(callbackQueryID string, text string) error {
+	url := fmt.Sprintf("%s/answerCallbackQuery", t.baseURL)
+
+	message := types.AnswerCallbackQueryRequest{
+		CallbackQueryID: callbackQueryID,
+		Text:            text,
+		ShowAlert:       true, // Включаем режим alert dialog
+	}
+
+	body, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("ошибка маршалинга запроса: %w", err)
+	}
+
+	resp, err := http.Post(url, "application/json", strings.NewReader(string(body)))
+	if err != nil {
+		return fmt.Errorf("ошибка отправки запроса: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("неуспешный статус ответа: %d, тело: %s", resp.StatusCode, string(body))
+	}
+
+	var response types.Response
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return fmt.Errorf("ошибка декодирования ответа: %w", err)
+	}
+
+	if !response.Ok {
+		return fmt.Errorf("ошибка API: %s", response.Description)
+	}
+
+	return nil
+}

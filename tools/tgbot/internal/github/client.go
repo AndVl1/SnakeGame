@@ -31,7 +31,7 @@ func (c *Client) TriggerWorkflow(workflowFile string) error {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/actions/workflows/%s/dispatches", c.repo, workflowFile)
 
 	payload := map[string]interface{}{
-		"ref": "main",
+		"ref": "develop",
 		"inputs": map[string]string{
 			"trigger": "manual",
 		},
