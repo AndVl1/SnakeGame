@@ -1,0 +1,50 @@
+name: Go
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths:
+      - 'tools/tgbot/**'
+      - '.github/workflows/go.yml'
+  pull_request:
+    branches: [ master, main, develop ]
+    paths:
+      - 'tools/tgbot/**'
+      - '.github/workflows/go.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/tgbot
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        check-latest: true
+        cache: true
+        cache-dependency-path: |
+          tools/tgbot/go.sum
+          tools/tgbot/**/*.go
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test
+      run: go test -v ./...
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+        args: --timeout=5m
+        working-directory: tools/tgbot
+        github-token: ${{ secrets.GITHUB_TOKEN }} 
