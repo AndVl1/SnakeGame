@@ -41,22 +41,8 @@ jobs:
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
 
-  verify-go:
-    needs: check-changes
-    runs-on: ubuntu-latest
-    steps:
-      - name: Verify Go project
-        run: |
-          if [ "${{ needs.check-changes.outputs.has_changes }}" == "true" ]; then
-            echo "Go project changes detected, skipping verification"
-            exit 0
-          else
-            echo "No Go project changes, verification passed"
-            exit 0
-          fi
-
   build-go:
-    needs: [check-changes, verify-go]
+    needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     defaults:
@@ -123,4 +109,13 @@ jobs:
             - Конфигурацию Go
             - CI/CD пайплайны
           edit-mode: replace
-          reactions: white_check_mark 
+          reactions: white_check_mark
+
+  final-status-go:
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [build-go, skip-notification]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job status
+        run: |
+          echo "✅ Все проверки Go успешно пройдены" 

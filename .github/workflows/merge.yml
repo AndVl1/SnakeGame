@@ -26,12 +26,39 @@ jobs:
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
     
-    - name: Merge develop into main
+    - name: Get commits to merge
+      id: get-commits
       run: |
-        git fetch origin
-        git checkout main
-        git merge develop --no-ff -m "Merge develop into main"
-        git push origin main
+        git fetch origin develop main
+        COMMITS=$(git log --pretty=format:"- %s" origin/main..origin/develop)
+        echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
+        echo "$COMMITS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create Pull Request
+      id: create-pr
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: 'release/develop-to-main'
+        base: 'main'
+        title: 'Merge develop into main'
+        body: |
+          Автоматическое создание PR для слияния ветки develop в main
+          
+          Создано через GitHub Actions
+          
+          ## Коммиты для слияния:
+          
+          ${{ steps.get-commits.outputs.COMMITS }}
+        draft: false
+        delete-branch: false
+    
+    - name: Get PR URL
+      id: get-pr-url
+      run: |
+        PR_URL=$(echo "${{ steps.create-pr.outputs.pull-request-number }}" | jq -r '.html_url')
+        echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
     
     - name: Notify Telegram
       uses: appleboy/telegram-action@master
@@ -41,11 +68,11 @@ jobs:
         message: |
           🔄 Запущен процесс создания нового релиза
           
-          Ветка develop успешно смержена в main
+          Создан Pull Request из ветки develop в main
           
-          Ссылка на коммит: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          Ссылка на PR: ${{ steps.get-pr-url.outputs.PR_URL }}
           
-          Ожидайте завершения сборки релиза... 
+          Ожидайте завершения проверки PR...
 
     - name: Notify Error to Telegram
       if: failure()
@@ -56,8 +83,9 @@ jobs:
         message: |
           ❌ Ошибка при создании релиза
           
-          Не удалось смержить ветку develop в main
+          Не удалось создать Pull Request из develop в main
           
           Ссылка на коммит: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          Ссылка на зафейленный экшн: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           
           Пожалуйста, проверьте логи и исправьте ошибку. 
