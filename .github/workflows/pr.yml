@@ -288,4 +288,13 @@ jobs:
             - Конфигурацию Gradle
             - CI/CD пайплайны
           edit-mode: replace
-          reactions: white_check_mark 
+          reactions: white_check_mark
+
+  final-status-android:
+    if: ${{ always() && contains(join(needs.*.result, ','), 'success') }}
+    needs: [build-and-test, skip-notification]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job status
+        run: |
+          echo "✅ Все проверки Android успешно пройдены" 
