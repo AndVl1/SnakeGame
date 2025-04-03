@@ -2,16 +2,33 @@ name: Pull Request Build
 
 on:
   pull_request:
-    paths:
-      - 'app/**'
-      - 'gradle/**'
-      - 'build.gradle*'
-      - 'settings.gradle*'
-      - 'gradle.properties'
-      - '.github/workflows/pr.yml'
+    branches: [ master, main, develop ]
 
 jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+      
+      - name: Check for Android changes
+        id: check
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD)
+          if echo "$CHANGED_FILES" | grep -qE '^(app/|gradle/|.*\.gradle|gradle\.properties|\.github/workflows/pr\.yml)'; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
   build-and-test:
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     
@@ -238,4 +255,37 @@ jobs:
         rm -rf ~/.gradle/caches/modules-2/modules-2.lock
         rm -rf ~/.gradle/caches/transforms-1
         rm -rf ~/.gradle/caches/journal-1
-        rm -rf ~/.gradle/caches/jars-3 
+        rm -rf ~/.gradle/caches/jars-3
+
+  skip-notification:
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Build Status
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### Build Status
+            
+            ✅ Проверки пропущены
+            
+            В PR отсутствуют изменения, затрагивающие Android-проект. Сборка и тесты не требуются.
+            
+            *Изменения не затрагивают:*
+            - Исходный код приложения
+            - Файлы сборки
+            - Конфигурацию Gradle
+            - CI/CD пайплайны
+          edit-mode: replace
+          reactions: white_check_mark 

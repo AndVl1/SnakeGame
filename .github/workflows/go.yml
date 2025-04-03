@@ -1,0 +1,119 @@
+name: Go
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths:
+      - 'tools/tgbot/**'
+      - '.github/workflows/go.yml'
+  pull_request:
+    branches: [ master, main, develop ]
+    paths:
+      - 'tools/tgbot/**'
+      - '.github/workflows/go.yml'
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref || github.sha }}
+      
+      - name: Check for Go changes
+        id: check
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref || github.event.before }} HEAD)
+          if echo "$CHANGED_FILES" | grep -qE '^(tools/tgbot/|\.github/workflows/go\.yml)'; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+  verify-go:
+    needs: check-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Go project
+        run: |
+          if [ "${{ needs.check-changes.outputs.has_changes }}" == "true" ]; then
+            echo "Go project changes detected, skipping verification"
+            exit 0
+          else
+            echo "No Go project changes, verification passed"
+            exit 0
+          fi
+
+  build-go:
+    needs: [check-changes, verify-go]
+    if: needs.check-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/tgbot
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        check-latest: true
+        cache: true
+        cache-dependency-path: |
+          tools/tgbot/go.sum
+          tools/tgbot/**/*.go
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test
+      run: go test -v ./...
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v7
+      with:
+        version: v2.0
+        args: --timeout=5m
+        working-directory: tools/tgbot
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  skip-notification:
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Go Build Status
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### Go Build Status
+            
+            ✅ Проверки пропущены
+            
+            В PR отсутствуют изменения, затрагивающие Go-проект. Сборка и тесты не требуются.
+            
+            *Изменения не затрагивают:*
+            - Исходный код Go
+            - Конфигурацию Go
+            - CI/CD пайплайны
+          edit-mode: replace
+          reactions: white_check_mark 

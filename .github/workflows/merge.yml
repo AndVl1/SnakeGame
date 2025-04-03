@@ -1,0 +1,48 @@
+name: Merge Develop to Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      trigger:
+        description: 'Триггер для запуска'
+        required: true
+        default: 'manual'
+        type: string
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Configure Git
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+    
+    - name: Merge develop into main
+      run: |
+        git fetch origin develop:develop
+        git checkout main
+        git merge develop --no-ff -m "Merge develop into main"
+        git push origin main
+    
+    - name: Notify Telegram
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TG_CHAT_IDS }}
+        token: ${{ secrets.TG_KEY }}
+        message: |
+          🔄 Запущен процесс создания нового релиза
+          
+          Ветка develop успешно смержена в main
+          
+          Ссылка на коммит: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          
+          Ожидайте завершения сборки релиза... 
