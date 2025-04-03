@@ -297,7 +297,7 @@ jobs:
     - name: Notify Telegram
       uses: appleboy/telegram-action@master
       with:
-        to: ${{ secrets.TG_CHAT_IDS }}
+        to: ${{ secrets.TG_CHAT }}
         token: ${{ secrets.TG_KEY }}
         message: |
           ✅ Новый релиз v${{ steps.version.outputs.VERSION }} успешно создан!
