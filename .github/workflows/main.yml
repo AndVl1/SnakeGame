@@ -3,6 +3,13 @@ name: Release Build
 on:
   push:
     branches: [ master, main ]
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle*'
+      - 'settings.gradle*'
+      - 'gradle.properties'
+      - '.github/workflows/main.yml'
 
 jobs:
   build:

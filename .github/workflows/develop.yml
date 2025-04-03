@@ -3,6 +3,13 @@ name: Develop Build
 on:
   push:
     branches: [ develop ]
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle*'
+      - 'settings.gradle*'
+      - 'gradle.properties'
+      - '.github/workflows/develop.yml'
 
 jobs:
   build:
