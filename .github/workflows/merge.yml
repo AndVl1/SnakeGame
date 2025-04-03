@@ -1,0 +1,110 @@
+name: Merge Develop to Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      trigger:
+        description: 'Триггер для запуска'
+        required: true
+        default: 'manual'
+        type: string
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Configure Git
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+    
+    - name: Get commits to merge
+      id: get-commits
+      run: |
+        git fetch origin develop main
+        COMMITS=$(git log --pretty=format:"- %s" origin/main..origin/develop)
+        echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
+        echo "$COMMITS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Check for changes
+      id: check-changes
+      run: |
+        git fetch origin develop main
+        # Проверяем количество коммитов между ветками
+        COMMITS_COUNT=$(git rev-list --count origin/main..origin/develop)
+        if [ "$COMMITS_COUNT" -eq "0" ]; then
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "❌ Нет изменений для слияния из develop в main"
+          exit 1
+        else
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "✅ Найдено $COMMITS_COUNT коммитов для слияния"
+        fi
+    
+    - name: Create release branch
+      if: steps.check-changes.outputs.has_changes == 'true'
+      run: |
+        git checkout develop
+        git pull origin develop
+        git checkout -b release/develop-to-main
+        git push origin release/develop-to-main --force
+    
+    - name: Create Pull Request
+      if: steps.check-changes.outputs.has_changes == 'true'
+      id: create-pr
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh pr create \
+          --title "Merge develop into main" \
+          --body "Автоматическое создание PR для слияния ветки develop в main \
+
+          Создано через GitHub Actions \
+
+          ## Коммиты для слияния: \
+
+          ${{ steps.get-commits.outputs.COMMITS }}" \
+          --base main \
+          --head release/develop-to-main
+        
+        PR_URL=$(gh pr view --json url -q .url)
+        echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
+    
+    - name: Notify Telegram
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TG_CHAT }}
+        token: ${{ secrets.TG_KEY }}
+        message: |
+          🔄 Запущен процесс создания нового релиза
+          
+          Создан Pull Request из ветки develop в main
+          
+          Ссылка на PR: ${{ steps.create-pr.outputs.PR_URL }}
+          
+          Ожидайте завершения проверки PR...
+
+    - name: Notify Error to Telegram
+      if: failure()
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TG_CHAT }}
+        token: ${{ secrets.TG_KEY }}
+        message: |
+          ❌ Ошибка при создании релиза
+          
+          Не удалось создать Pull Request из develop в main
+          
+          Ссылка на коммит: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          Ссылка на зафейленный экшн: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          Пожалуйста, проверьте логи и исправьте ошибку. 

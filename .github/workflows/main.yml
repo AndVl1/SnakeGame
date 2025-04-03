@@ -3,6 +3,13 @@ name: Release Build
 on:
   push:
     branches: [ master, main ]
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle*'
+      - 'settings.gradle*'
+      - 'gradle.properties'
+      - '.github/workflows/main.yml'
 
 jobs:
   build:
@@ -285,6 +292,26 @@ jobs:
         draft: false
         prerelease: false
         makeLatest: true
+
+    # Отправляем уведомление в Telegram
+    - name: Notify Telegram
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TG_CHAT_IDS }}
+        token: ${{ secrets.TG_KEY }}
+        message: |
+          ✅ Новый релиз v${{ steps.version.outputs.VERSION }} успешно создан!
+          
+          📦 Сборка:
+          - Номер сборки: ${{ steps.buildnumber.outputs.build_number }}
+          - Время сборки: ${{ steps.build-time.outputs.build_time }}
+          
+          🔗 Ссылки:
+          - [GitHub Release](${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.VERSION }})
+          - [APK](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
+          - [AAB](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
+          
+          📝 Примечание: Эта сборка использует релизную конфигурацию с официальной подписью.
     
     # Очистка кэшей в редких случаях
     - name: Cleanup Gradle Cache
