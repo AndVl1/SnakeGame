@@ -61,27 +61,20 @@ jobs:
     - name: Create Pull Request
       if: steps.check-changes.outputs.has_changes == 'true'
       id: create-pr
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'release/develop-to-main'
-        base: 'main'
-        title: 'Merge develop into main'
-        body: |
-          Автоматическое создание PR для слияния ветки develop в main
-          
-          Создано через GitHub Actions
-          
-          ## Коммиты для слияния:
-          
-          ${{ steps.get-commits.outputs.COMMITS }}
-        draft: false
-        delete-branch: false
-    
-    - name: Get PR URL
-      id: get-pr-url
       run: |
-        PR_URL=$(echo "${{ steps.create-pr.outputs.pull-request-number }}" | jq -r '.html_url')
+        gh pr create \
+          --title "Merge develop into main" \
+          --body "Автоматическое создание PR для слияния ветки develop в main
+
+Создано через GitHub Actions
+
+## Коммиты для слияния:
+
+${{ steps.get-commits.outputs.COMMITS }}" \
+          --base main \
+          --head release/develop-to-main
+        
+        PR_URL=$(gh pr view --json url -q .url)
         echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
     
     - name: Notify Telegram
@@ -94,7 +87,7 @@ jobs:
           
           Создан Pull Request из ветки develop в main
           
-          Ссылка на PR: ${{ steps.get-pr-url.outputs.PR_URL }}
+          Ссылка на PR: ${{ steps.create-pr.outputs.PR_URL }}
           
           Ожидайте завершения проверки PR...
 
