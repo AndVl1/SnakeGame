@@ -50,6 +50,14 @@ jobs:
           echo "✅ Найдено $COMMITS_COUNT коммитов для слияния"
         fi
     
+    - name: Create release branch
+      if: steps.check-changes.outputs.has_changes == 'true'
+      run: |
+        git checkout develop
+        git pull origin develop
+        git checkout -b release/develop-to-main
+        git push origin release/develop-to-main --force
+    
     - name: Create Pull Request
       if: steps.check-changes.outputs.has_changes == 'true'
       id: create-pr
