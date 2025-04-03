@@ -61,6 +61,8 @@ jobs:
     - name: Create Pull Request
       if: steps.check-changes.outputs.has_changes == 'true'
       id: create-pr
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         gh pr create \
           --title "Merge develop into main" \
