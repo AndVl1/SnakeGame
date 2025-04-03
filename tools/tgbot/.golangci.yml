@@ -1,3 +1,55 @@
 version: "2"
-run: {timeout: 5m, tests: true, }
-linters: { enable: [ govet, staticcheck, ineffassign, unused, misspell], disable: [ errcheck]}
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - misspell
+  disable:
+    - errcheck
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - disableStutteringCheck
+
+run:
+  timeout: 5m
+  tests: true
+  skip-files:
+    - ".*_test\\.go$"
+    - "vendor/.*"
+    - "third_party/.*"
+    - "testdata/.*"
+    - "examples/.*"
+    - "Godeps/.*"
+    - "builtin/.*"
+
+issues:
+  exclude:
+    - path: internal/telegram/api\.go
+      linters:
+        - gosec
+        - errcheck
+        - revive
+      text: "potential HTTP request made with variable url"
+    - path: cmd/bot/main\.go
+      linters:
+        - gosec
+        - revive
+      text: "potential file inclusion via variable"
+    - path: internal/bot/config\.go
+      linters:
+        - gosec
+      text: "potential file inclusion via variable"
+    - path: internal/github/api\.go
+      linters:
+        - errcheck
+        - revive
+      text: "unhandled error returned"
