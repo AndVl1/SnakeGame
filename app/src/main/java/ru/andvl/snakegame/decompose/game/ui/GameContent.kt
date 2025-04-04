@@ -1,14 +1,13 @@
 package ru.andvl.snakegame.decompose.game.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,13 +44,19 @@ import ru.andvl.snakegame.ui.SaveScoreDialog
 @Composable
 fun GameContent(
     component: GameComponent,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val state by component.state.subscribeAsState()
     val showSaveScoreDialog by component.showSaveScoreDialog.subscribeAsState()
-
-    // Состояние для диалога подтверждения выхода
     var showExitConfirmationDialog by remember { mutableStateOf(false) }
+
+    // Получаем размеры экрана
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
+
+    // Вычисляем оптимальный размер для игрового поля
+    val maxBoardSize = minOf(screenWidth - 32.dp, screenHeight * 0.65f)
 
     // Перехватчик кнопки назад
     BackHandler(enabled = true) {
@@ -76,70 +82,83 @@ fun GameContent(
         GameInstructionsDialog(onDismiss = component::onDismissInstructions)
     }
 
-    // Основной контент экрана
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
     ) {
-        // Заголовок игры
-        Text(
-            text = stringResource(R.string.game_title),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 8.dp),
-            textAlign = TextAlign.Center
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Заголовок игры
+            Text(
+                text = stringResource(R.string.game_title),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(vertical = 8.dp),
+                textAlign = TextAlign.Center
+            )
 
-        // Информационная панель (счет и скорость)
-        InfoPanel(
-            score = state.score,
-            speedFactor = state.speedFactor,
-            modifier = Modifier.fillMaxWidth()
-        )
+            // Информационная панель и легенда
 
-        // Легенда типов еды
-        FoodLegend(modifier = Modifier.fillMaxWidth())
+            InfoPanel(
+                score = state.score,
+                speedFactor = state.speedFactor,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        // Игровое поле
-        val displayFood = state.food?.let { GameModelConverter.convertFoodToDisplayGameFood(it) }
+            FoodLegend(
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        GameBoard(
-            snakeParts = GameModelConverter.convertGridPositionsToSnakeParts(state.snakeParts),
-            food = displayFood,
-            obstacles = state.obstacles.map { Obstacle(it.position.x, it.position.y) },
-            isGameOver = state.deathAnimationActive,
-            doubleScoreActive = state.doubleScoreActive,
-            pulsatingSpeedActive = state.pulsatingSpeedActive,
-            onDirectionChange = {
-                component.onDirectionChange(GameModelConverter.convertDirection(it))
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
+            // Игровое поле
+            val displayFood =
+                state.food?.let { GameModelConverter.convertFoodToDisplayGameFood(it) }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                GameBoard(
+                    snakeParts = GameModelConverter.convertGridPositionsToSnakeParts(state.snakeParts),
+                    food = displayFood,
+                    obstacles = state.obstacles.map { Obstacle(it.position.x, it.position.y) },
+                    isGameOver = state.deathAnimationActive,
+                    doubleScoreActive = state.doubleScoreActive,
+                    pulsatingSpeedActive = state.pulsatingSpeedActive,
+                    onDirectionChange = {
+                        component.onDirectionChange(GameModelConverter.convertDirection(it))
+                    },
+                    modifier = Modifier
+                        .widthIn(max = maxBoardSize)
+                        .aspectRatio(1f)
+                )
+            }
 
-        // Небольшой отступ между полем и элементами управления
-        Spacer(modifier = Modifier.height(4.dp))
+            // Элементы управления
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                GameDirectionControls(
+                    onDirectionChange = {
+                        component.onDirectionChange(GameModelConverter.convertDirection(it))
+                    },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-        // Элементы управления направлением
-        GameDirectionControls(
-            onDirectionChange = {
-                component.onDirectionChange(GameModelConverter.convertDirection(it))
-            },
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
-
-        // Небольшой отступ между элементами управления и кнопками действий
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Кнопки действий
-        GameActionControls(
-            gameState = state.gameState,
-            onPlayPauseClick = component::onPlayPauseClick,
-            onRestartClick = component::onRestartClick,
-            onShowInstructionsClick = component::onShowInstructionsClick,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+                GameActionControls(
+                    gameState = state.gameState,
+                    onPlayPauseClick = component::onPlayPauseClick,
+                    onRestartClick = component::onRestartClick,
+                    onShowInstructionsClick = component::onShowInstructionsClick
+                )
+            }
+        }
     }
 
     // Диалог сохранения счета

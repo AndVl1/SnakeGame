@@ -38,6 +38,27 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         prefix: 'android'
     
+    # Получаем список коммитов для ченджлога
+    - name: Get changelog
+      id: changelog
+      run: |
+        # Получаем последний тег develop
+        git fetch --tags
+        LATEST_TAG=$(git tag -l 'develop-*' --sort=-v:refname | head -n 1 || echo "")
+        
+        if [ -z "$LATEST_TAG" ]; then
+          # Если тегов нет, берем последние 10 коммитов
+          COMMITS=$(git log -n 10 --pretty=format:"- %s (%h)" --reverse)
+        else
+          # Если есть тег, берем коммиты после него
+          COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s (%h)" --reverse)
+        fi
+        
+        # Сохраняем список коммитов
+        echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
+        echo "$COMMITS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
@@ -269,7 +290,10 @@ jobs:
           Версия: ${{ steps.version.outputs.DEVELOP_VERSION }}
           Коммит: ${{ github.sha }}
           
-          В релизе:
+          ## Последние изменения:
+          ${{ steps.changelog.outputs.COMMITS }}
+          
+          ## Артефакты:
           - Debug APK для тестирования
           - Release APK с подписью для расширенного тестирования
           
