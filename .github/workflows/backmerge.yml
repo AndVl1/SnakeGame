@@ -1,0 +1,92 @@
+name: Create Backmerge PR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-backmerge-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: develop
+
+      - name: Create backmerge branch
+        run: |
+          # Создаем ветку для бэкмержа
+          git checkout -b backmerge/main-to-develop
+          
+          # Мержим main в develop
+          git merge main --no-ff -m "Merge main into develop"
+          
+          # Пушим ветку
+          git push origin backmerge/main-to-develop
+
+      - name: Get commits to merge
+        id: get-commits
+        run: |
+          git fetch origin main develop
+          COMMITS=$(git log --pretty=format:"- %s" origin/develop..origin/main)
+          echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --title "Backmerge: main → develop" \
+            --body "Автоматический бэкмерж main в develop \
+
+            Создано через GitHub Actions \
+
+            ## Коммиты для слияния: \
+
+            ${{ steps.get-commits.outputs.COMMITS }} \
+
+            ## Метки: \
+
+            - backmerge \
+
+            - automated" \
+            --base develop \
+            --head backmerge/main-to-develop \
+            --label "backmerge,automated" \
+            --assignee "${{ github.actor }}"
+          
+          PR_URL=$(gh pr view --json url -q .url)
+          echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
+
+      - name: Notify Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TG_CHAT }}
+          token: ${{ secrets.TG_KEY }}
+          message: |
+            🔄 Создан PR для бэкмержа main в develop
+            
+            Ссылка на PR: ${{ steps.create-pr.outputs.PR_URL }}
+            
+            Ожидайте завершения проверки PR...
+
+      - name: Notify Error to Telegram
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TG_CHAT }}
+          token: ${{ secrets.TG_KEY }}
+          message: |
+            ❌ Ошибка при создании бэкмержа
+            
+            Не удалось создать Pull Request из main в develop
+            
+            Ссылка на коммит: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+            Ссылка на зафейленный экшн: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            Пожалуйста, проверьте логи и исправьте ошибку. 

@@ -22,7 +22,6 @@ class MainActivity : ComponentActivity() {
 
         // Получаем фабрику сторов из Application
         val storeFactory = (application as SnakeApplication).storeFactory
-        
         val rootComponent = RootComponent(
             componentContext = defaultComponentContext(),
             storeFactory = storeFactory,

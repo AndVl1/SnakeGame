@@ -106,8 +106,8 @@ dependencies {
 
 tracer {
     create("defaultConfig") {
-        pluginToken = System.getenv("TRACER_APP_TOKEN") ?: gradleLocalProperties(rootDir, providers).getProperty("tracer_app_token")
-        appToken = System.getenv("TRACER_PLUGIN_TOKEN") ?: gradleLocalProperties(rootDir, providers).getProperty("tracer_plugin_token")
+        pluginToken = System.getenv("TRACER_PLUGIN_TOKEN") ?: gradleLocalProperties(rootDir, providers).getProperty("tracer_plugin_token")
+        appToken = System.getenv("TRACER_APP_TOKEN") ?: gradleLocalProperties(rootDir, providers).getProperty("tracer_app_token")
         uploadMapping = true
         uploadNativeSymbols = false
     }
