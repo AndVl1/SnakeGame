@@ -6,9 +6,33 @@ import com.arkivanov.mvikotlin.logging.logger.Logger
 import com.arkivanov.mvikotlin.logging.store.LoggingStoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.arkivanov.mvikotlin.timetravel.store.TimeTravelStoreFactory
+import io.appmetrica.analytics.AppMetrica
+import io.appmetrica.analytics.AppMetricaConfig
+import ru.ok.tracer.CoreTracerConfiguration
+import ru.ok.tracer.HasTracerConfiguration
+import ru.ok.tracer.TracerConfiguration
+import ru.ok.tracer.crash.report.CrashFreeConfiguration
+import ru.ok.tracer.crash.report.CrashReportConfiguration
+import ru.ok.tracer.disk.usage.DiskUsageConfiguration
 
-class SnakeApplication : Application() {
-    
+class SnakeApplication : Application(), HasTracerConfiguration {
+
+    override val tracerConfiguration: List<TracerConfiguration>
+        get() = listOf(
+            CoreTracerConfiguration.build {
+                setDebugUpload(true)
+            },
+            CrashReportConfiguration.build {
+                setSendAnr(true)
+            },
+            CrashFreeConfiguration.build {
+                setEnabled(true)
+            },
+            DiskUsageConfiguration.build {
+                setEnabled(true)
+            }
+        )
+
     // Фабрика сторов MVIKotlin, доступная для всего приложения
     val storeFactory: StoreFactory by lazy {
         // В режиме отладки используем LoggingStoreFactory для логирования
@@ -32,7 +56,11 @@ class SnakeApplication : Application() {
     
     override fun onCreate() {
         super.onCreate()
-        
-        // Инициализация дополнительных компонентов может быть добавлена здесь
+
+        val appMetricaConfig = AppMetricaConfig.newConfigBuilder(BuildConfig.APP_METRICA_API_KEY)
+            .withCrashReporting(false)
+            .build()
+        AppMetrica.activate(this, appMetricaConfig)
+        AppMetrica.enableActivityAutoTracking(this)
     }
 } 

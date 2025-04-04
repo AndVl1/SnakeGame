@@ -18,6 +18,8 @@ appcompat = "1.6.1"
 coroutinesTest = "1.7.3"
 mockk = "1.13.8"
 kotlinReflect = "1.9.0"
+tracer = "1.0.4"
+appMetrica = "7.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -58,9 +60,19 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlinReflect" }
 
+# Аналитика
+appTracer-bom = { group = "ru.ok.tracer", name = "tracer-platform", version.ref = "tracer" }
+appTracer-crashes = { group = "ru.ok.tracer", name = "tracer-crash-report" }
+appTracer-disk-usage = { group = "ru.ok.tracer", name = "tracer-disk-usage" }
+appMetrica-analytics = { group = "io.appmetrica.analytics", name = "analytics", version.ref = "appMetrica" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+appTracer = { id = "ru.ok.tracer", version.ref = "tracer" }
+
+[bundles]
+appTracer-bom = ["appTracer-crashes", "appTracer-disk-usage"]
