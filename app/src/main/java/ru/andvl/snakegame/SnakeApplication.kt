@@ -6,6 +6,8 @@ import com.arkivanov.mvikotlin.logging.logger.Logger
 import com.arkivanov.mvikotlin.logging.store.LoggingStoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
 import com.arkivanov.mvikotlin.timetravel.store.TimeTravelStoreFactory
+import io.appmetrica.analytics.AppMetrica
+import io.appmetrica.analytics.AppMetricaConfig
 import ru.ok.tracer.CoreTracerConfiguration
 import ru.ok.tracer.HasTracerConfiguration
 import ru.ok.tracer.TracerConfiguration
@@ -54,7 +56,11 @@ class SnakeApplication : Application(), HasTracerConfiguration {
     
     override fun onCreate() {
         super.onCreate()
-        
-        // Инициализация дополнительных компонентов может быть добавлена здесь
+
+        val appMetricaConfig = AppMetricaConfig.newConfigBuilder(BuildConfig.APP_METRICA_API_KEY)
+            .withCrashReporting(false)
+            .build()
+        AppMetrica.activate(this, appMetricaConfig)
+        AppMetrica.enableActivityAutoTracking(this)
     }
 } 

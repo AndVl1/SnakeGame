@@ -19,6 +19,7 @@ coroutinesTest = "1.7.3"
 mockk = "1.13.8"
 kotlinReflect = "1.9.0"
 tracer = "1.0.4"
+appMetrica = "7.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -63,6 +64,7 @@ kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", vers
 appTracer-bom = { group = "ru.ok.tracer", name = "tracer-platform", version.ref = "tracer" }
 appTracer-crashes = { group = "ru.ok.tracer", name = "tracer-crash-report" }
 appTracer-disk-usage = { group = "ru.ok.tracer", name = "tracer-disk-usage" }
+appMetrica-analytics = { group = "io.appmetrica.analytics", name = "analytics", version.ref = "appMetrica" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

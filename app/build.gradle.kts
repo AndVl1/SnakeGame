@@ -21,6 +21,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Добавляем BuildConfig поле для AppMetrica
+        buildConfigField("String", "APP_METRICA_API_KEY", "\"${System.getenv("APP_METRICA_API_KEY") ?: gradleLocalProperties(rootDir, providers).getProperty("app_metrica_api_key")}\"")
     }
 
     buildTypes {
@@ -41,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -84,6 +88,7 @@ dependencies {
     // Аналитика
     implementation(platform(libs.appTracer.bom))
     implementation(libs.bundles.appTracer.bom)
+    implementation(libs.appMetrica.analytics)
 
     // Тестирование
     testImplementation(libs.junit)
@@ -104,6 +109,6 @@ tracer {
         pluginToken = System.getenv("TRACER_APP_TOKEN") ?: gradleLocalProperties(rootDir, providers).getProperty("tracer_app_token")
         appToken = System.getenv("TRACER_PLUGIN_TOKEN") ?: gradleLocalProperties(rootDir, providers).getProperty("tracer_plugin_token")
         uploadMapping = true
-        uploadNativeSymbols = true
+        uploadNativeSymbols = false
     }
 }

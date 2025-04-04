@@ -117,10 +117,11 @@ jobs:
       run: chmod +x gradlew
     
     # Устанавливаем переменные окружения для App Tracer
-    - name: Setup App Tracer environment
+    - name: Setup analytics environment
       run: |
         echo "TRACER_APP_TOKEN=${{ secrets.TRACER_APP_TOKEN }}" >> $GITHUB_ENV
         echo "TRACER_PLUGIN_TOKEN=${{ secrets.TRACER_PLUGIN_TOKEN }}" >> $GITHUB_ENV
+        echo "APP_METRICA_API_KEY=${{ secrets.APP_METRICA_API_KEY }}" >> $GITHUB_ENV
     
     - name: Determine develop version
       id: version
