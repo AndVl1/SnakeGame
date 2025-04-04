@@ -37,10 +37,10 @@ class SettingsComponent(
             context = context
         ).create()
     }
-    
+
     // Используем SupervisorJob для устойчивости к ошибкам в корутинах
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    
+
     val state: Value<State> = store.asValue({ storeState ->
         State(
             isDarkTheme = storeState.isDarkTheme,
@@ -49,11 +49,11 @@ class SettingsComponent(
             error = storeState.error
         )
     }, lifecycle)
-    
+
     init {
         // Загружаем настройки при инициализации
         store.accept(SettingsIntent.LoadSettings)
-        
+
         // Обрабатываем события из стора
         val labelsJob = store.labels
             .onEach { label ->
@@ -65,30 +65,30 @@ class SettingsComponent(
                 }
             }
             .launchIn(scope)
-            
+
         // Отменяем корутины при уничтожении компонента
         lifecycle.doOnDestroy {
             labelsJob.cancel()
             scope.cancel()
         }
     }
-    
+
     fun onBackClicked() {
         store.accept(SettingsIntent.ClickBack)
     }
-    
+
     fun onThemeToggled() {
         store.accept(SettingsIntent.ToggleTheme)
     }
-    
+
     fun onAppLocaleSelected(localeCode: String) {
         store.accept(SettingsIntent.SelectLocale(localeCode))
     }
-    
+
     data class State(
         val isDarkTheme: Boolean = false,
         val appLocale: String = "",
         val isLoading: Boolean = false,
         val error: String? = null
     )
-} 
+}

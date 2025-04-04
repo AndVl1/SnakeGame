@@ -20,18 +20,18 @@ import kotlinx.coroutines.flow.onEach
  */
 fun <T : Any> Flow<T>.asValue(initialValue: T, lifecycle: Lifecycle? = null): Value<T> {
     val value = MutableValue(initialValue)
-    
+
     // Создаем scope для подписки на flow
     val scope = CoroutineScope(Dispatchers.Main.immediate)
-    
+
     // Подписываемся на изменения flow и обновляем value
     onEach { value.value = it }.launchIn(scope)
-    
+
     // Если передан lifecycle, отменяем корутины при уничтожении
     lifecycle?.doOnDestroy {
         scope.cancel()
     }
-    
+
     // Возвращаем интерфейс Value, который не позволяет менять значение извне
     return value
 }
@@ -42,18 +42,18 @@ fun <T : Any> Flow<T>.asValue(initialValue: T, lifecycle: Lifecycle? = null): Va
  */
 fun <T : Any> StateFlow<T>.asValue(lifecycle: Lifecycle? = null): Value<T> {
     val value = MutableValue(this.value)
-    
+
     // Создаем scope для подписки на flow
     val scope = CoroutineScope(Dispatchers.Main.immediate)
-    
+
     // Подписываемся на изменения flow и обновляем value
     onEach { value.value = it }.launchIn(scope)
-    
+
     // Если передан lifecycle, отменяем корутины при уничтожении
     lifecycle?.doOnDestroy {
         scope.cancel()
     }
-    
+
     // Возвращаем интерфейс Value, который не позволяет менять значение извне
     return value
 }
@@ -64,4 +64,4 @@ fun <T : Any> StateFlow<T>.asValue(lifecycle: Lifecycle? = null): Value<T> {
  */
 fun <Intent, State : Any, Label> Store<Intent, State, Label>.asValue(lifecycle: Lifecycle? = null): Value<State> {
     return stateFlow.asValue(lifecycle)
-} 
+}

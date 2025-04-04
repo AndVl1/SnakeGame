@@ -16,11 +16,11 @@ fun SettingsContent(
     modifier: Modifier = Modifier
 ) {
     val state by component.state.subscribeAsState()
-    
+
     SettingsScreen(
         isDarkTheme = state.isDarkTheme,
         onThemeToggled = { component.onThemeToggled() },
         onBackClicked = { component.onBackClicked() },
         modifier = modifier
     )
-} 
+}

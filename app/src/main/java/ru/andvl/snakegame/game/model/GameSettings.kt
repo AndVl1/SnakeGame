@@ -13,28 +13,28 @@ import kotlinx.serialization.Serializable
 data class GameSettings(
     // Сложность игры (от 1 до 5)
     val difficulty: Int = 3,
-    
+
     // Размер игрового поля (от 10 до 20)
     val boardSize: Int = 15,
-    
+
     // Включена ли темная тема
     val isDarkTheme: Boolean = false,
-    
+
     // Включены ли вибрации
     val vibrationsEnabled: Boolean = true,
-    
+
     // Включены ли звуки
     val soundsEnabled: Boolean = true,
-    
+
     // Начальная скорость змейки (1.0f - нормальная)
     val initialSpeedFactor: Float = 1.0f,
-    
+
     // Максимальное количество препятствий
     val maxObstacles: Int = 5,
-    
+
     // Частота появления специальной еды (1-10, где 10 - наиболее часто)
     val specialFoodFrequency: Int = 5,
-    
+
     // Выбранный язык приложения ("" означает использование системного языка)
     val appLocale: String = ""
 ) {
@@ -50,4 +50,4 @@ data class GameSettings(
         val SPECIAL_FOOD_FREQUENCY_KEY = intPreferencesKey("special_food_frequency")
         val APP_LOCALE_KEY = stringPreferencesKey("app_locale")
     }
-} 
+}

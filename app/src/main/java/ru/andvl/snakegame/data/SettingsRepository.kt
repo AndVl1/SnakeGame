@@ -16,7 +16,7 @@ private val Context.settingsDataStore: DataStore<Preferences> by preferencesData
  * Репозиторий для работы с настройками игры
  */
 class SettingsRepository(private val context: Context) {
-    
+
     /**
      * Получает настройки игры как Flow
      */
@@ -33,7 +33,7 @@ class SettingsRepository(private val context: Context) {
             appLocale = preferences[GameSettings.APP_LOCALE_KEY] ?: GameSettings().appLocale
         )
     }
-    
+
     /**
      * Обновляет настройки игры
      */
@@ -50,14 +50,14 @@ class SettingsRepository(private val context: Context) {
             preferences[GameSettings.APP_LOCALE_KEY] = gameSettings.appLocale
         }
     }
-    
+
     /**
      * Сбрасывает настройки к значениям по умолчанию
      */
     suspend fun resetSettings() {
         updateSettings(GameSettings())
     }
-    
+
     /**
      * Обновление отдельной настройки темы
      */
@@ -66,7 +66,7 @@ class SettingsRepository(private val context: Context) {
             preferences[GameSettings.DARK_THEME_KEY] = enabled
         }
     }
-    
+
     /**
      * Обновление отдельной настройки вибрации
      */
@@ -75,7 +75,7 @@ class SettingsRepository(private val context: Context) {
             preferences[GameSettings.VIBRATIONS_KEY] = enabled
         }
     }
-    
+
     /**
      * Обновление отдельной настройки звуков
      */
@@ -84,7 +84,7 @@ class SettingsRepository(private val context: Context) {
             preferences[GameSettings.SOUNDS_KEY] = enabled
         }
     }
-    
+
     /**
      * Обновление отдельной настройки сложности
      */
@@ -93,7 +93,7 @@ class SettingsRepository(private val context: Context) {
             preferences[GameSettings.DIFFICULTY_KEY] = difficulty.coerceIn(1, 5)
         }
     }
-    
+
     /**
      * Обновление локали приложения
      */
@@ -102,4 +102,4 @@ class SettingsRepository(private val context: Context) {
             preferences[GameSettings.APP_LOCALE_KEY] = locale
         }
     }
-} 
+}

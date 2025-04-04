@@ -41,7 +41,7 @@ class GameEngine(
     private val scope = CoroutineScope(Dispatchers.Main)
     private var gameUpdateJob: Job? = null
     private var deathAnimationJob: Job? = null
-    
+
     // Константы игры
     private val boardSize = GameConstants.BOARD_SIZE
     private val initialSnakeLength = 3
@@ -51,7 +51,7 @@ class GameEngine(
     private val speedBoostDuration = 5000L
     private val maxObstacles = 5
     private val CELL_SIZE = GameConstants.CELL_SIZE
-    
+
     // Игровое состояние
     private var gameState = GameState.Paused
     private var currentUpdateDelay = initialUpdateDelay
@@ -64,25 +64,25 @@ class GameEngine(
     private var speedFactor = 1.0f
     private var baseSpeedFactor = 1.0f // Базовый множитель скорости без временных эффектов
     private var foodEatenCount = 0 // Счетчик съеденных точек
-    
+
     // Флаги эффектов
     private var doubleScoreActive = false
     private var pulsatingSpeedActive = false
     private var pulsatingPhase = 0f
     private var doubleScoreJob: Job? = null
     private var pulsatingSpeedJob: Job? = null
-    
+
     // Флаги для анимации
     private var deathAnimationActive = false
     private var showInstructions = true
-    
+
     /**
      * Инициализация движка
      */
     fun initialize() {
         resetGame()
     }
-    
+
     /**
      * Запуск игры
      */
@@ -93,7 +93,7 @@ class GameEngine(
             startGameLoop()
         }
     }
-    
+
     /**
      * Перезапуск игры
      */
@@ -103,7 +103,7 @@ class GameEngine(
         doubleScoreJob?.cancel()
         pulsatingSpeedJob?.cancel()
         deathAnimationJob?.cancel()
-        
+
         // Сбрасываем состояние
         gameState = GameState.Paused
         currentUpdateDelay = initialUpdateDelay
@@ -116,7 +116,7 @@ class GameEngine(
         doubleScoreActive = false
         pulsatingSpeedActive = false
         deathAnimationActive = false
-        
+
         // Создаем змейку в центре экрана
         val centerY = boardSize / 2
         val startX = boardSize / 2
@@ -124,16 +124,16 @@ class GameEngine(
         for (i in 0 until initialSnakeLength) {
             snakeParts.add(SnakePart(startX - i, centerY))
         }
-        
+
         // Размещаем еду и препятствия
         spawnObstacles()
         spawnFood()
-        
+
         // Уведомляем о смене состояния
         onStateChanged(gameState)
         updateUiState()
     }
-    
+
     /**
      * Приостановка игры
      */
@@ -144,7 +144,7 @@ class GameEngine(
             onStateChanged(gameState)
         }
     }
-    
+
     /**
      * Возобновление игры
      */
@@ -155,7 +155,7 @@ class GameEngine(
             startGameLoop()
         }
     }
-    
+
     /**
      * Изменение направления движения
      */
@@ -168,7 +168,7 @@ class GameEngine(
             Direction.RIGHT -> if (currentDirection != Direction.LEFT) direction else currentDirection
         }
     }
-    
+
     /**
      * Показать инструкции
      */
@@ -176,7 +176,7 @@ class GameEngine(
         showInstructions = true
         updateUiState()
     }
-    
+
     /**
      * Скрыть инструкции
      */
@@ -184,7 +184,7 @@ class GameEngine(
         showInstructions = false
         updateUiState()
     }
-    
+
     /**
      * Запуск игрового цикла
      */
@@ -198,13 +198,13 @@ class GameEngine(
             }
         }
     }
-    
+
     /**
      * Рассчитывает задержку между обновлениями
      */
     private fun calculateUpdateDelay(): Long {
         val baseDelay = (initialUpdateDelay / speedFactor).toLong()
-        
+
         return if (pulsatingSpeedActive) {
             // Расчет пульсирующей скорости
             val pulseFactor = 0.5f + 0.5f * kotlin.math.sin(System.currentTimeMillis() / 200.0)
@@ -213,19 +213,19 @@ class GameEngine(
             baseDelay
         }
     }
-    
+
     /**
      * Обновление игры
      */
     private fun updateGame() {
         if (gameState != GameState.Running) return
-        
+
         // Обновляем текущее направление движения
         currentDirection = nextDirection
-        
+
         // Получаем текущую голову
         val head = snakeParts.first()
-        
+
         // Определяем новую позицию головы на основе текущего направления
         val newHead = when (currentDirection) {
             Direction.UP -> {
@@ -245,7 +245,7 @@ class GameEngine(
                 SnakePart(newX, head.y)
             }
         }
-        
+
         println("DEBUG: Переход головы: ${head.x},${head.y} -> ${newHead.x},${newHead.y} (направление: $currentDirection)")
 
         // Проверка на столкновение с самим собой
@@ -260,36 +260,36 @@ class GameEngine(
             gameOver()
             return
         }
-        
+
         // Проверка на столкновение с препятствием
         if (obstacles.any { it.position.x == newHead.x && it.position.y == newHead.y }) {
             gameOver()
             return
         }
-        
+
         // Теперь добавляем новую голову, когда мы знаем, что столкновений нет
         snakeParts.add(0, newHead)
-        
+
         // Координаты головы змейки
         val headX = newHead.x
         val headY = newHead.y
-        
+
         // Координаты точки
         val foodX = food.position.x
         val foodY = food.position.y
-        
+
         // Добавим отладочный вывод для координат
         println("DEBUG: Проверка еды - Голова: ($headX, $headY), Еда: ($foodX, $foodY)")
-        
+
         // Проверка точного совпадения координат
         val foodEaten = (headX == foodX && headY == foodY)
-        
+
         if (foodEaten) {
             // Если съели точку
             println("DEBUG: Еда съедена! Голова: ($headX, $headY), Еда: ($foodX, $foodY), Точка реально съедена: $foodEaten")
             // Начисляем очки и активируем эффекты
             processEatenFood()
-            
+
             // Создаем новую точку
             spawnFood()
         } else {
@@ -298,11 +298,11 @@ class GameEngine(
                 snakeParts.removeAt(snakeParts.size - 1)
             }
         }
-        
+
         // Обновление UI
         updateUiState()
     }
-    
+
     /**
      * Обработка съеденной точки
      */
@@ -310,12 +310,12 @@ class GameEngine(
         // Начисляем очки
         val points = if (doubleScoreActive) 2 else 1
         score += points
-        
+
         // Обрабатываем логику увеличения скорости для обычных точек
         if (food.type == FoodType.REGULAR) {
             // Увеличиваем счетчик съеденных точек
             foodEatenCount++
-            
+
             // Каждые 3 съеденные точки увеличиваем скорость на 0.1
             if (foodEatenCount % 3 == 0) {
                 baseSpeedFactor += 0.1f
@@ -323,7 +323,7 @@ class GameEngine(
                 updateUiState() // Обновляем UI для отображения новой скорости
             }
         }
-        
+
         // Применяем эффекты в зависимости от типа точки
         when (food.type) {
             FoodType.REGULAR -> {
@@ -343,20 +343,20 @@ class GameEngine(
             }
         }
     }
-    
+
     /**
      * Активация двойных очков
      */
     private fun activateDoubleScore() {
         // Активируем эффект
         doubleScoreActive = true
-        
+
         // Обновляем UI немедленно
         updateUiState()
-        
+
         // Отменяем предыдущую задачу, если она была
         doubleScoreJob?.cancel()
-        
+
         // Запускаем новую задачу для отключения эффекта через заданное время
         doubleScoreJob = scope.launch {
             delay(doubleScoreDuration)
@@ -364,7 +364,7 @@ class GameEngine(
             updateUiState()
         }
     }
-    
+
     /**
      * Активация ускорения
      */
@@ -372,36 +372,36 @@ class GameEngine(
         // Сохраняем текущую базовую скорость для восстановления позже
         val savedBaseSpeedFactor = baseSpeedFactor
         val savedFoodEatenCount = foodEatenCount
-        
+
         // Применяем временный эффект замедления (умножаем на коэффициент < 1.0 для замедления)
         speedFactor = baseSpeedFactor * speedBoostMultiplier
-        
+
         // Отменяем предыдущую задачу, если она была
         pulsatingSpeedJob?.cancel()
-        
+
         // Активируем пульсирующий эффект
         pulsatingSpeedActive = true
-        
+
         // Обновляем UI немедленно, чтобы отобразить изменение скорости и активацию эффекта
         updateUiState()
-        
+
         // Запускаем новую задачу для отключения эффекта через заданное время
         pulsatingSpeedJob = scope.launch {
             delay(speedBoostDuration)
-            
+
             // Отключаем визуальный эффект пульсации
             pulsatingSpeedActive = false
-            
+
             // Возвращаем сохраненную скорость
             baseSpeedFactor = savedBaseSpeedFactor
             speedFactor = baseSpeedFactor
             foodEatenCount = savedFoodEatenCount
-            
+
             // Обновляем UI после изменений
             updateUiState()
         }
     }
-    
+
     /**
      * Активация постоянного ускорения
      */
@@ -410,11 +410,11 @@ class GameEngine(
         baseSpeedFactor *= 1.2f
         // Применяем к текущей скорости
         speedFactor = baseSpeedFactor
-        
+
         // Обновляем UI немедленно
         updateUiState()
     }
-    
+
     /**
      * Активация замедления
      */
@@ -427,68 +427,68 @@ class GameEngine(
         }
         // Применяем к текущей скорости
         speedFactor = baseSpeedFactor
-        
+
         // Обновляем UI немедленно
         updateUiState()
     }
-    
+
     /**
      * Обработка конца игры
      */
     private fun gameOver() {
         gameState = GameState.GameOver
         gameUpdateJob?.cancel()
-        
+
         // Явно уведомляем колбэк о смене состояния перед запуском анимации
         onStateChanged(gameState)
-        
+
         // Запускаем анимацию смерти
         startDeathAnimation()
-        
+
         // Обновляем UI состояние с новыми данными
         updateUiState()
     }
-    
+
     /**
      * Запуск анимации смерти
      */
     private fun startDeathAnimation() {
         deathAnimationActive = true
         updateUiState()
-        
+
         deathAnimationJob = scope.launch {
             delay(1500) // Длительность анимации
             deathAnimationActive = false
             updateUiState()
         }
     }
-    
+
     /**
      * Создание точки в случайном месте
      */
     private fun spawnFood() {
         // Список всех доступных позиций (не занятых змейкой или препятствиями)
         val availablePositions = mutableListOf<GridPosition>()
-        
+
         // Проходим по всей сетке и находим свободные позиции
         for (x in 0 until boardSize) {
             for (y in 0 until boardSize) {
                 val position = GridPosition(x, y)
-                
+
                 // Проверяем что позиция не занята змейкой или препятствием
-                val positionFree = !snakeParts.any { it.x == position.x && it.y == position.y } && 
+                val positionFree = !snakeParts.any { it.x == position.x && it.y == position.y } &&
                                !obstacles.any { it.position.x == position.x && it.position.y == position.y }
-                
+
                 if (positionFree) {
                     availablePositions.add(position)
                 }
             }
         }
-        
+
         // Если есть доступные позиции, выбираем случайную
         if (availablePositions.isNotEmpty()) {
             val randomPosition = availablePositions.random()
-            
+
             // Выбираем случайный тип точки
             val foodType = when {
                 Random.nextFloat() < 0.05f -> FoodType.DOUBLE_SCORE // 5% вероятность
@@ -497,45 +497,45 @@ class GameEngine(
                 Random.nextFloat() < 0.2f -> FoodType.SLOW_DOWN     // 5% вероятность
                 else -> FoodType.REGULAR                            // 80% вероятность
             }
-            
+
             // Создаем новую точку
             food = Food(randomPosition, foodType)
-            
+
             println("DEBUG: Создана новая еда типа $foodType в позиции (${randomPosition.x}, ${randomPosition.y})")
         }
     }
-    
+
     /**
      * Создание препятствий
      */
     private fun spawnObstacles() {
         obstacles.clear()
-        
+
         // Добавляем случайное количество препятствий
         val obstacleCount = Random.nextInt(1, maxObstacles + 1)
-        
+
         for (i in 0 until obstacleCount) {
             val availablePositions = mutableListOf<GridPosition>()
-            
+
             // Собираем все свободные позиции на полном поле (включая последний столбец и строку)
             for (x in 0 until boardSize) {
                 for (y in 0 until boardSize) {
                     val position = GridPosition(x, y)
-                    if (!snakeParts.any { it.x == position.x && it.y == position.y } && 
-                        position != food.position && 
+                    if (!snakeParts.any { it.x == position.x && it.y == position.y } &&
+                        position != food.position &&
                         !obstacles.any { it.position == position }) {
                         availablePositions.add(position)
                     }
                 }
             }
-            
+
             if (availablePositions.isNotEmpty()) {
                 val position = availablePositions.random()
                 obstacles.add(Obstacle(position))
             }
         }
     }
-    
+
     /**
      * Обновляет состояние UI
      */
@@ -554,4 +554,4 @@ class GameEngine(
             )
         )
     }
-} 
+}

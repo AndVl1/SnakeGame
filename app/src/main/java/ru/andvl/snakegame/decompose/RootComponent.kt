@@ -35,7 +35,7 @@ class RootComponent(
     private val scoreRepository = ScoreRepository(context)
     private val settingsRepository = SettingsRepository(context)
     private val scope = CoroutineScope(Dispatchers.Main)
-    
+
     // Состояние настроек для применения темы
     val settingsState: Flow<GameSettings?> = settingsRepository.settings
 
@@ -87,15 +87,15 @@ class RootComponent(
                         if (playerName != null) {
                             saveScore(playerName, score, speedFactor)
                         }
-                        
+
                         // Переходим на экран лидерборда
                         navigation.navigate { stack -> listOf(Config.Leaderboard) }
-                        
+
                         // Находим активный компонент лидерборда и обновляем его данные
                         scope.launch {
                             // Даем время на переход на экран лидерборда
                             kotlinx.coroutines.delay(100)
-                            
+
                             // Получаем текущий активный экран
                             val currentChild = childStack.value.active.instance
                             if (currentChild is Child.Leaderboard) {
@@ -129,4 +129,4 @@ class RootComponent(
             )
         }
     }
-} 
+}
