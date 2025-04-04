@@ -15,6 +15,11 @@ jobs:
           fetch-depth: 0
           ref: develop
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
       - name: Create backmerge branch
         run: |
           # Создаем ветку для бэкмержа
