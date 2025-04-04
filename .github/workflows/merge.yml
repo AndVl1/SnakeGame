@@ -93,6 +93,8 @@ jobs:
           
           Ожидайте завершения проверки PR...
 
+          [❌ Отменить создание релиза](https://t.me/${{ secrets.TG_BOT_USERNAME }}?start=cancel_release_${{ github.run_id }})
+
     - name: Notify Error to Telegram
       if: failure()
       uses: appleboy/telegram-action@master

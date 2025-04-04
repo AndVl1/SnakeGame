@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -312,5 +313,32 @@ func (t *API) ShowAlert(callbackQueryID string, text string) error {
 		return fmt.Errorf("ошибка API: %s", response.Description)
 	}
 
+	return nil
+}
+
+// DeleteMessage удаляет сообщение в чате
+func (t *API) DeleteMessage(chatID int64, messageID int) error {
+	url := fmt.Sprintf("%s/bot%s/deleteMessage", t.baseURL, t.token)
+	
+	req := DeleteMessageRequest{
+		ChatID:    chatID,
+		MessageID: messageID,
+	}
+	
+	jsonData, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("ошибка маршалинга запроса: %v", err)
+	}
+	
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("ошибка отправки запроса: %v", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("неверный статус ответа: %d", resp.StatusCode)
+	}
+	
 	return nil
 }
