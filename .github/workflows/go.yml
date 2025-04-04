@@ -7,7 +7,7 @@ on:
       - 'tools/tgbot/**'
       - '.github/workflows/go.yml'
   pull_request:
-    branches: [ master, main, develop ]
+    types: [opened, synchronize, reopened]
 
 jobs:
   check-changes:
