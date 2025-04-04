@@ -1,9 +1,12 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.appTracer)
 }
 
 android {
@@ -77,7 +80,11 @@ dependencies {
     implementation(libs.mvikotlin.coroutines)
     implementation(libs.mvikotlin.logging)
     implementation(libs.mvikotlin.timetravel)
-    
+
+    // Аналитика
+    implementation(platform(libs.appTracer.bom))
+    implementation(libs.bundles.appTracer.bom)
+
     // Тестирование
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -90,4 +97,13 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+tracer {
+    create("defaultConfig") {
+        pluginToken = System.getenv("TRACER_APP_TOKEN") ?: gradleLocalProperties(rootDir, providers).getProperty("tracer_app_token")
+        appToken = System.getenv("TRACER_PLUGIN_TOKEN") ?: gradleLocalProperties(rootDir, providers).getProperty("tracer_plugin_token")
+        uploadMapping = true
+        uploadNativeSymbols = true
+    }
 }

@@ -134,6 +134,12 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     
+    # Устанавливаем переменные окружения для App Tracer
+    - name: Setup App Tracer environment
+      run: |
+        echo "TRACER_APP_TOKEN=${{ secrets.TRACER_APP_TOKEN }}" >> $GITHUB_ENV
+        echo "TRACER_PLUGIN_TOKEN=${{ secrets.TRACER_PLUGIN_TOKEN }}" >> $GITHUB_ENV
+    
     # Запускаем unit-тесты с оптимизациями
     - name: Run unit tests
       run: ./gradlew testDebugUnitTest --build-cache --parallel --no-daemon
