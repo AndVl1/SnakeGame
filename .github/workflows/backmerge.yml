@@ -21,7 +21,7 @@ jobs:
           git checkout -b backmerge/main-to-develop
           
           # Мержим main в develop
-          git merge main --no-ff -m "Merge main into develop"
+          git merge origin/main --no-ff -m "Merge main into develop"
           
           # Пушим ветку
           git push origin backmerge/main-to-develop
