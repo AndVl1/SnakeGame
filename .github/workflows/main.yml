@@ -157,6 +157,27 @@ jobs:
         sed -i "s/versionCode = .*/versionCode = ${{ steps.buildnumber.outputs.build_number }}/g" app/build.gradle.kts
         sed -i "s/versionName = .*/versionName = \"${{ steps.version.outputs.VERSION }}\"/g" app/build.gradle.kts
 
+    # Получаем список коммитов для ченджлога
+    - name: Get changelog
+      id: changelog
+      run: |
+        # Получаем последний тег
+        git fetch --tags
+        LATEST_TAG=$(git tag -l 'v*' --sort=-v:refname | head -n 1 || echo "")
+        
+        if [ -z "$LATEST_TAG" ]; then
+          # Если тегов нет, берем все коммиты
+          COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse)
+        else
+          # Если есть тег, берем коммиты после него
+          COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s (%h)" --reverse)
+        fi
+        
+        # Сохраняем список коммитов
+        echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
+        echo "$COMMITS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
     # Для master/main собираем release-версию APK и Bundle
     - name: Build release APK and Bundle
       run: ./gradlew assembleRelease bundleRelease --build-cache --parallel --no-daemon
@@ -287,7 +308,10 @@ jobs:
           Версия: ${{ steps.version.outputs.VERSION }}
           Коммит: ${{ github.sha }}
           
-          В релизе:
+          ## Изменения в этом релизе:
+          ${{ steps.changelog.outputs.COMMITS }}
+          
+          ## Артефакты:
           - APK файл для установки на устройство
           - AAB файл для загрузки в Google Play
           
@@ -309,6 +333,9 @@ jobs:
           📦 Сборка:
           - Номер сборки: ${{ steps.buildnumber.outputs.build_number }}
           - Время сборки: ${{ steps.build-time.outputs.build_time }}
+          
+          📝 Изменения:
+          ${{ steps.changelog.outputs.COMMITS }}
           
           🔗 Ссылки:
           - [GitHub Release](${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.VERSION }})
