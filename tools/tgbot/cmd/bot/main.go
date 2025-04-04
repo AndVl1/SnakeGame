@@ -109,6 +109,8 @@ func handleUpdate(update types.Update) {
 
 func handleCommand(message *types.Message) {
 	switch message.Text {
+	case "/start":
+		showMainMenu(message.ChatID)
 	case "/help":
 		showHelp(message.ChatID)
 	default:

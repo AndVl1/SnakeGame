@@ -27,3 +27,8 @@ type Chat struct {
 	ID   int64  `json:"id"`
 	Type string `json:"type"`
 }
+
+type DeleteMessageRequest struct {
+	ChatID    int64 `json:"chat_id"`
+	MessageID int   `json:"message_id"`
+}

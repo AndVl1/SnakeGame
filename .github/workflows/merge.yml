@@ -30,7 +30,13 @@ jobs:
       id: get-commits
       run: |
         git fetch origin develop main
-        COMMITS=$(git log --pretty=format:"- %s" origin/main..origin/develop)
+        
+        # Находим общий базовый коммит между main и develop
+        BASE_COMMIT=$(git merge-base origin/main origin/develop)
+        echo "Base commit: $BASE_COMMIT"
+        
+        # Получаем коммиты от базового до develop
+        COMMITS=$(git log --pretty=format:"- %s" $BASE_COMMIT..origin/develop)
         echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
         echo "$COMMITS" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
@@ -39,16 +45,63 @@ jobs:
       id: check-changes
       run: |
         git fetch origin develop main
-        # Проверяем количество коммитов между ветками
-        COMMITS_COUNT=$(git rev-list --count origin/main..origin/develop)
+        
+        # Находим общий базовый коммит между main и develop
+        BASE_COMMIT=$(git merge-base origin/main origin/develop)
+        
+        # Проверяем количество коммитов от базового до develop
+        COMMITS_COUNT=$(git rev-list --count $BASE_COMMIT..origin/develop)
         if [ "$COMMITS_COUNT" -eq "0" ]; then
           echo "has_changes=false" >> $GITHUB_OUTPUT
           echo "❌ Нет изменений для слияния из develop в main"
           exit 1
         else
           echo "has_changes=true" >> $GITHUB_OUTPUT
-          echo "✅ Найдено $COMMITS_COUNT коммитов для слияния"
+          echo "✅ Найдено $COMMITS_COUNT новых коммитов для слияния"
+          
+          # Выводим список коммитов для наглядности
+          echo "Коммиты для слияния:"
+          git log --pretty=format:"- %h %s" $BASE_COMMIT..origin/develop
         fi
+    
+    - name: Check existing PR
+      id: check-pr
+      if: steps.check-changes.outputs.has_changes == 'true'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # Проверяем существующий PR через GitHub API
+        PR_DATA=$(curl -s -H "Authorization: token ${{ github.token }}" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:release/develop-to-main&state=open")
+        
+        PR_NUMBER=$(echo "$PR_DATA" | jq -r '.[0].number // empty')
+        if [ ! -z "$PR_NUMBER" ]; then
+          echo "existing_pr=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "✅ Найден существующий PR #$PR_NUMBER"
+        else
+          echo "existing_pr=0" >> $GITHUB_OUTPUT
+          echo "✅ Существующий PR не найден"
+        fi
+
+    - name: Close existing PR
+      if: steps.check-pr.outputs.existing_pr != '0'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # Закрываем существующий PR через GitHub API
+        curl -X PATCH \
+          -H "Authorization: token ${{ github.token }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          -d '{"state":"closed"}' \
+          "https://api.github.com/repos/${{ github.repository }}/pulls/${{ steps.check-pr.outputs.existing_pr }}"
+        
+        # Удаляем ветку через GitHub API
+        curl -X DELETE \
+          -H "Authorization: token ${{ github.token }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/release/develop-to-main"
+        
+        echo "✅ Закрыт PR #${{ steps.check-pr.outputs.existing_pr }} и удалена ветка"
     
     - name: Create release branch
       if: steps.check-changes.outputs.has_changes == 'true'
@@ -75,10 +128,10 @@ jobs:
           ${{ steps.get-commits.outputs.COMMITS }}" \
           --base main \
           --head release/develop-to-main
-        
+
         PR_URL=$(gh pr view --json url -q .url)
         echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
-    
+
     - name: Notify Telegram
       uses: appleboy/telegram-action@master
       with:
@@ -86,11 +139,11 @@ jobs:
         token: ${{ secrets.TG_KEY }}
         message: |
           🔄 Запущен процесс создания нового релиза
-          
+
           Создан Pull Request из ветки develop в main
-          
+
           Ссылка на PR: ${{ steps.create-pr.outputs.PR_URL }}
-          
+
           Ожидайте завершения проверки PR...
 
     - name: Notify Error to Telegram
