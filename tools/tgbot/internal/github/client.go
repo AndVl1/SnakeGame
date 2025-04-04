@@ -64,3 +64,28 @@ func (c *Client) TriggerWorkflow(workflowFile string) error {
 
 	return nil
 }
+
+// DeleteBranch удаляет ветку в репозитории
+func (c *Client) DeleteBranch(branchName string) error {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/git/refs/heads/%s", c.repo, branchName)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", c.token))
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("ошибка отправки запроса: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("неверный статус ответа: %d", resp.StatusCode)
+	}
+
+	return nil
+}
