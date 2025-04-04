@@ -122,7 +122,7 @@ jobs:
         echo "TRACER_APP_TOKEN=${{ secrets.TRACER_APP_TOKEN }}" >> $GITHUB_ENV
         echo "TRACER_PLUGIN_TOKEN=${{ secrets.TRACER_PLUGIN_TOKEN }}" >> $GITHUB_ENV
         echo "APP_METRICA_API_KEY=${{ secrets.APP_METRICA_API_KEY }}" >> $GITHUB_ENV
-    
+
     - name: Determine version
       id: version
       run: |
@@ -319,7 +319,7 @@ jobs:
           - [AAB](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
           
           📝 Примечание: Эта сборка использует релизную конфигурацию с официальной подписью.
-    
+
     # Очистка кэшей в редких случаях
     - name: Cleanup Gradle Cache
       # Запускается только по условию, например, еженедельно
