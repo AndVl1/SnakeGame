@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -63,20 +62,23 @@ fun GameBoard(
         ),
         label = "pulse"
     )
-    
+
     // Анимация затухания для смерти
     val fadeAlpha by animateFloatAsState(
         targetValue = if (isGameOver) 0.7f else 1f,
         animationSpec = tween(1500),
         label = "fade"
     )
-    
+
     Box(
         modifier = modifier
             .aspectRatio(1f)
             .background(Color(0xFFEEEEEE))
-            .scale(if (isGameOver) pulseScale else 1f)
-            .graphicsLayer { alpha = fadeAlpha }
+            .graphicsLayer {
+                alpha = fadeAlpha
+                scaleX = if (isGameOver) pulseScale else 1f
+                scaleY = if (isGameOver) pulseScale else 1f
+            }
             .pointerInput(Unit) {
                 detectDragGestures { change, dragAmount ->
                     change.consume()
@@ -97,17 +99,17 @@ fun GameBoard(
         // Используем remember для кэширования размеров канваса
         var savedCanvasWidth = 0f
         var savedPixelCellSize = 0f
-        
+
         // Рисуем сетку и препятствия на Canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
             val canvasWidth = size.width
             val canvasHeight = size.height
             val pixelCellSize = canvasWidth / boardSize
-            
+
             // Сохраняем значения для использования за пределами Canvas
             savedCanvasWidth = canvasWidth
             savedPixelCellSize = pixelCellSize
-            
+
             // Рисуем сетку
             val gridColor = Color(0xFFDDDDDD)
             for (i in 0..boardSize) {
@@ -126,72 +128,72 @@ fun GameBoard(
                     strokeWidth = 1f
                 )
             }
-            
+
             // Рисуем препятствия
             obstacles.forEach { obstacle ->
                 // Нормализуем координаты, чтобы они были в пределах отображаемой сетки
                 val normalizedX = obstacle.x % boardSize
                 val normalizedY = obstacle.y % boardSize
-                
+
                 drawRect(
                     color = Color(0xFF5D4037), // Коричневый цвет для препятствий
                     topLeft = Offset(normalizedX * pixelCellSize, normalizedY * pixelCellSize),
                     size = Size(pixelCellSize, pixelCellSize)
                 )
             }
-            
+
             // Рисуем змейку
             snakeParts.forEachIndexed { index, part ->
                 // Нормализуем координаты, чтобы они были в пределах отображаемой сетки
                 val normalizedX = part.x % boardSize
                 val normalizedY = part.y % boardSize
-                
+
                 // Определяем цвет части змейки
                 val snakeColor = when {
                     // Голова красная при смерти
                     isGameOver && index == 0 -> Color.Red
-                    
+
                     // Голова зеленая в обычном состоянии
                     index == 0 -> Color(0xFF4CAF50)
-                    
+
                     // Тело желтое при активном удвоении очков
                     doubleScoreActive && index % 2 == 0 -> Color(0xFFFFEB3B)
-                    
+
                     // Тело с переливающимися цветами при активной пульсации скорости
                     pulsatingSpeedActive && index % 2 == 0 -> Color(0xFFE91E63)
-                    
+
                     // Обычный цвет тела
                     else -> Color(0xFF8BC34A)
                 }
-                
+
                 drawRect(
                     color = snakeColor,
                     topLeft = Offset(normalizedX * pixelCellSize, normalizedY * pixelCellSize),
                     size = Size(pixelCellSize, pixelCellSize)
                 )
             }
-            
+
             // ПОЛНОСТЬЮ ПЕРЕДЕЛЫВАЕМ ОТРИСОВКУ ЕДЫ
             // Получаем логические координаты из еды на основе точного размера ячейки
             food?.let { safeFood ->
                 // Преобразуем пиксельные координаты в координаты сетки
                 val gridX = (safeFood.position.x / GameModelConverter.CELL_SIZE).toInt()
                 val gridY = (safeFood.position.y / GameModelConverter.CELL_SIZE).toInt()
-                
+
                 // Используем нормализованные координаты для учета того же размера сетки, как в GameEngine
                 val normalizedX = gridX % boardSize
                 val normalizedY = gridY % boardSize
-                
+
                 // Вычисляем центр ячейки в пикселях Canvas
                 val centerX = (normalizedX + 0.5f) * pixelCellSize
                 val centerY = (normalizedY + 0.5f) * pixelCellSize
-                
+
                 // Отладочный вывод для координат еды
                 println("DEBUG: Отрисовка еды - пиксельные: (${safeFood.position.x}, ${safeFood.position.y}), сетка: ($gridX, $gridY), нормализованные: ($normalizedX, $normalizedY), центр: ($centerX, $centerY)")
-                
+
                 // Определяем радиус еды (чуть меньше половины ячейки)
                 val radius = pixelCellSize * 0.4f
-                
+
                 // Определяем цвет на основе типа еды
                 val foodColor = when (safeFood.type) {
                     FoodType.REGULAR -> Color.Red
@@ -199,7 +201,7 @@ fun GameBoard(
                     FoodType.DOUBLE_SCORE -> Color(0xFFFFD700) // Gold
                     FoodType.SLOW_DOWN -> Color.Blue
                 }
-                
+
                 // Рисуем еду как круг
                 drawCircle(
                     color = foodColor,
@@ -208,20 +210,20 @@ fun GameBoard(
                 )
             }
         }
-        
+
         // Расчет размера ячейки для анимированной еды
         val pixelCellSize = savedCanvasWidth / boardSize
-        
+
         // Анимируем еду в зависимости от типа
         food?.let { safeFood ->
             // Получаем логические координаты еды для анимации
             val gridX = (safeFood.position.x / GameModelConverter.CELL_SIZE).toInt()
             val gridY = (safeFood.position.y / GameModelConverter.CELL_SIZE).toInt()
-            
+
             // Нормализуем координаты для согласованности с GameEngine
             val normalizedX = gridX % boardSize
             val normalizedY = gridY % boardSize
-            
+
             // ИСПРАВЛЯЕМ ЛОГИКУ ДЛЯ АНИМИРОВАННОЙ ЕДЫ
             // Теперь данные для анимаций берутся из модели Food под капотом
             val foodObj = NewFood(
@@ -236,10 +238,10 @@ fun GameBoard(
                     FoodType.SLOW_DOWN -> NewFoodType.SLOW_DOWN
                 }
             )
-            
+
             // Создаем IntSize для доски
             val boardSizeIntSize = IntSize(boardSize, boardSize)
-            
+
             // Показываем анимированную еду
             AnimatedFood(
                 food = foodObj,
@@ -248,4 +250,4 @@ fun GameBoard(
             )
         }
     }
-} 
+}
