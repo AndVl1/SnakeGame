@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
             storeFactory = storeFactory,
             context = this
         )
-        
+
         enableEdgeToEdge()
         setContent {
             val settings by rootComponent.settingsState.collectAsState(initial = null)

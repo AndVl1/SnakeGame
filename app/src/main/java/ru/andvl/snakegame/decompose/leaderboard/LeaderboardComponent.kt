@@ -33,7 +33,7 @@ class LeaderboardComponent(
 
     // Используем SupervisorJob для устойчивости к ошибкам в корутинах
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    
+
     // Создаем и сохраняем store в instanceKeeper
     private val store = instanceKeeper.getStore {
         LeaderboardStoreFactory(
@@ -41,10 +41,10 @@ class LeaderboardComponent(
             scoreRepository = scoreRepository
         ).create()
     }
-    
+
     // Экспонируем state как Value для Decompose с привязкой к lifecycle
     val state: Value<LeaderboardState> = store.asValue(lifecycle)
-    
+
     init {
         // Подписываемся на лейблы из хранилища
         val labelsJob = store.labels
@@ -62,16 +62,16 @@ class LeaderboardComponent(
                 }
             }
             .launchIn(scope)
-            
+
         // Отменяем корутины при уничтожении компонента
         lifecycle.doOnDestroy {
             labelsJob.cancel()
             scope.cancel()
         }
-            
+
         // Инициализируем загрузку данных при первом запуске
         store.accept(LeaderboardIntent.LoadScores)
-        
+
         // Подписываемся на жизненный цикл, чтобы обновлять данные при RESUMED
         lifecycle.subscribe(object : Lifecycle.Callbacks {
             override fun onResume() {
@@ -80,13 +80,13 @@ class LeaderboardComponent(
             }
         })
     }
-    
+
     // Публичные методы для UI
-    
+
     fun onStartGameClick() {
         store.accept(LeaderboardIntent.StartGame)
     }
-    
+
     fun onSettingsClick() {
         store.accept(LeaderboardIntent.OpenSettings)
     }
@@ -95,4 +95,4 @@ class LeaderboardComponent(
     fun refreshLeaderboard() {
         store.accept(LeaderboardIntent.LoadScores)
     }
-} 
+}

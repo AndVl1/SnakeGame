@@ -29,7 +29,7 @@ class GameStoreFactory(
         // Используем константу из единого источника
         val BOARD_SIZE = GameConstants.BOARD_SIZE
     }
-    
+
     /**
      * Создать экземпляр GameStore
      */
@@ -41,9 +41,9 @@ class GameStoreFactory(
             executorFactory = { createExecutor() },
             reducer = ReducerImpl
         ) {}
-    
+
     private fun createExecutor() = GameExecutor()
-    
+
     private inner class GameExecutor : CoroutineExecutor<GameIntent, Unit, GameState, Result, GameLabel>(
         Dispatchers.Main
     ) {
@@ -53,22 +53,22 @@ class GameStoreFactory(
         private var gridWidth = BOARD_SIZE
         private var gridHeight = BOARD_SIZE
         private var gameSpeed = 150L  // Начальная скорость
-        
+
         // Флаги для различных эффектов
         private var doubleScoreActive = false
         private var pulsatingSpeedActive = false
         private var doubleScoreJob: Job? = null
         private var pulsatingSpeedJob: Job? = null
-        
+
         init {
             // Инициализируем игру при создании
             initGame()
         }
-        
+
         override fun executeAction(action: Unit, getState: () -> GameState) {
             // Действие при создании уже выполнено в init
         }
-        
+
         override fun executeIntent(intent: GameIntent, getState: () -> GameState) {
             when (intent) {
                 is GameIntent.Initialize -> initGame()
@@ -83,7 +83,7 @@ class GameStoreFactory(
                 is GameIntent.HandleGameOver -> handleGameOver(getState)
             }
         }
-        
+
         private fun initGame() {
             scope.launch {
                 dispatch(Result.Loading)
@@ -95,10 +95,10 @@ class GameStoreFactory(
                     )
                     val initialFood = generateFood(initialSnake, emptyList())
                     val initialObstacles = generateObstacles(initialSnake, initialFood)
-                    
+
                     // Сброс скорости к начальному значению
                     dispatch(Result.SpeedFactorChanged(1.0f))
-                    
+
                     dispatch(Result.GameInitialized(
                         snakeParts = initialSnake,
                         food = initialFood,
@@ -111,7 +111,7 @@ class GameStoreFactory(
                 }
             }
         }
-        
+
         private fun togglePlayPause(getState: () -> GameState) {
             val currentState = getState()
             when(currentState.gameState) {
@@ -120,51 +120,51 @@ class GameStoreFactory(
                 GameStateEnum.GameOver -> restartGame()
             }
         }
-        
+
         private fun pauseGame() {
             gameLoop?.cancel()
             dispatch(Result.GameStateChanged(GameStateEnum.Paused))
         }
-        
+
         private fun resumeGame(getState: () -> GameState) {
             if (getState().gameState != GameStateEnum.Running) {
                 dispatch(Result.GameStateChanged(GameStateEnum.Running))
                 startGameLoop(getState)
             }
         }
-        
+
         private fun restartGame() {
             // Отменяем текущую логику
             gameLoop?.cancel()
             doubleScoreJob?.cancel()
             pulsatingSpeedJob?.cancel()
-            
+
             // Сбрасываем состояние
             direction = Direction.RIGHT
             nextDirection = Direction.RIGHT
             gameSpeed = 150L
             doubleScoreActive = false
             pulsatingSpeedActive = false
-            
+
             // Сбрасываем значение speedFactor к начальному
             dispatch(Result.SpeedFactorChanged(1.0f))
-            
+
             // Инициализируем новую игру
             initGame()
         }
-        
+
         private fun changeDirection(newDirection: Direction) {
             // Проверяем, что новое направление не противоположно текущему
             val isOpposite = (direction == Direction.UP && newDirection == Direction.DOWN) ||
                     (direction == Direction.DOWN && newDirection == Direction.UP) ||
                     (direction == Direction.LEFT && newDirection == Direction.RIGHT) ||
                     (direction == Direction.RIGHT && newDirection == Direction.LEFT)
-            
+
             if (!isOpposite) {
                 nextDirection = newDirection
             }
         }
-        
+
         private fun startGameLoop(getState: () -> GameState) {
             gameLoop?.cancel()
             gameLoop = scope.launch {
@@ -174,14 +174,14 @@ class GameStoreFactory(
                 }
             }
         }
-        
+
         private fun moveSnake(getState: () -> GameState) {
             val currentState = getState()
             val currentSnake = currentState.snakeParts.toMutableList()
-            
+
             // Применить следующее направление
             direction = nextDirection
-            
+
             // Вычислить новую позицию головы
             val head = currentSnake.firstOrNull() ?: return
             val newHead = when (direction) {
@@ -190,16 +190,16 @@ class GameStoreFactory(
                 Direction.LEFT -> GridPosition((head.x - 1 + gridWidth) % gridWidth, head.y)
                 Direction.RIGHT -> GridPosition((head.x + 1 + gridWidth) % gridWidth, head.y)
             }
-            
+
             // Проверить столкновение с самим собой или препятствием
             if (isCollision(newHead, currentSnake, currentState.obstacles)) {
                 handleCollision(getState)
                 return
             }
-            
+
             // Добавить новую голову
             currentSnake.add(0, newHead)
-            
+
             // Проверить столкновение с едой
             val food = currentState.food
             if (food != null && newHead.x == food.position.x && newHead.y == food.position.y) {
@@ -209,34 +209,34 @@ class GameStoreFactory(
                 if (currentSnake.size > 0) {
                     currentSnake.removeAt(currentSnake.size - 1)
                 }
-                
+
                 // Обновить состояние змейки
                 dispatch(Result.SnakeMoved(currentSnake))
             }
         }
-        
+
         private fun isCollision(head: GridPosition, snake: List<GridPosition>, obstacles: List<Obstacle>): Boolean {
             // Проверка столкновения с телом змеи (не с головой)
             if (snake.size > 1 && snake.subList(1, snake.size).any { it.x == head.x && it.y == head.y }) {
                 return true
             }
-            
+
             // Проверка столкновения с препятствиями
             return obstacles.any { it.position.x == head.x && it.position.y == head.y }
         }
-        
+
         private fun handleCollision(getState: () -> GameState) {
             dispatch(Result.StartDeathAnimation)
-            
+
             // Отменить игровой цикл
             gameLoop?.cancel()
-            
+
             // Запустить анимацию смерти
             scope.launch {
                 delay(1000) // Длительность анимации
                 dispatch(Result.DeathAnimationComplete)
                 dispatch(Result.GameStateChanged(GameStateEnum.GameOver))
-                
+
                 // Показать диалог сохранения счета
                 val currentState = getState()
                 if (currentState.score > 0) {
@@ -244,37 +244,37 @@ class GameStoreFactory(
                 }
             }
         }
-        
+
         private fun handleFoodCollision(food: Food, snake: MutableList<GridPosition>, getState: () -> GameState) {
             var scoreIncrease = 1
             var newFood: Food? = null
-            
+
             // Обработка в зависимости от типа еды
             when (food.type) {
                 FoodType.REGULAR -> {
                     scoreIncrease = if (doubleScoreActive) 2 else 1
-                    
+
                     // Увеличиваем счетчик съеденных обычных точек и обновляем скорость
                     val currentScore = getState().score
                     val newScore = currentScore + scoreIncrease
-                    
+
                     // Каждые 3 очка увеличиваем скорость на 0.1
                     if (newScore > 0 && newScore % 3 == 0) {
                         val currentSpeedFactor = getState().speedFactor
                         val newSpeedFactor = currentSpeedFactor + 0.1f
                         dispatch(Result.SpeedFactorChanged(newSpeedFactor))
                     }
-                    
+
                     newFood = generateFood(snake, getState().obstacles)
                 }
                 FoodType.SPEED_UP -> {
                     scoreIncrease = if (doubleScoreActive) 4 else 2
                     gameSpeed = (gameSpeed * 0.8).toLong() // Увеличиваем скорость
-                    
+
                     // Рассчитываем новый speedFactor
                     val baseSpeed = 150f
                     val newSpeedFactor = baseSpeed / gameSpeed
-                    
+
                     dispatch(Result.SpeedFactorChanged(newSpeedFactor))
                     newFood = generateFood(snake, getState().obstacles)
                 }
@@ -286,14 +286,14 @@ class GameStoreFactory(
                 FoodType.SLOW_DOWN -> {
                     scoreIncrease = if (doubleScoreActive) 3 else 1
                     gameSpeed = (gameSpeed * 1.2).toLong() // Уменьшаем скорость
-                    
+
                     // Не даем скорости стать слишком низкой
                     if (gameSpeed > 250) gameSpeed = 250
-                    
+
                     // Рассчитываем новый speedFactor
                     val baseSpeed = 150f
                     val newSpeedFactor = baseSpeed / gameSpeed
-                    
+
                     dispatch(Result.SpeedFactorChanged(newSpeedFactor))
                     newFood = generateFood(snake, getState().obstacles)
                 }
@@ -303,42 +303,42 @@ class GameStoreFactory(
                     newFood = generateFood(snake, getState().obstacles)
                 }
             }
-            
+
             // Увеличиваем счет
             val newScore = getState().score + scoreIncrease
-            
+
             // Обновляем состояние
             dispatch(Result.FoodCollected(snake, newFood, newScore))
         }
-        
+
         private fun activateDoubleScore() {
             doubleScoreJob?.cancel()
             doubleScoreActive = true
             dispatch(Result.DoubleScoreChanged(true))
-            
+
             doubleScoreJob = scope.launch {
                 delay(10000) // 10 секунд двойного счета
                 doubleScoreActive = false
                 dispatch(Result.DoubleScoreChanged(false))
             }
         }
-        
+
         private fun generateFood(snake: List<GridPosition>, obstacles: List<Obstacle>): Food {
             val availablePositions = mutableListOf<GridPosition>()
-            
+
             // Собираем все свободные позиции
             for (x in 0 until gridWidth) {
                 for (y in 0 until gridHeight) {
                     val pos = GridPosition(x, y)
                     val isSnakePart = snake.any { it.x == pos.x && it.y == pos.y }
                     val isObstacle = obstacles.any { it.position.x == pos.x && it.position.y == pos.y }
-                    
+
                     if (!isSnakePart && !isObstacle) {
                         availablePositions.add(pos)
                     }
                 }
             }
-            
+
             // Выбираем случайную позицию
             val position = if (availablePositions.isNotEmpty()) {
                 availablePositions.random()
@@ -346,7 +346,7 @@ class GameStoreFactory(
                 // Если нет свободных позиций, используем крайнее решение
                 GridPosition(0, 0)
             }
-            
+
             // Выбираем тип еды с разными вероятностями
             val foodTypeRandom = Random.nextFloat()
             val foodType = when {
@@ -356,59 +356,59 @@ class GameStoreFactory(
                 foodTypeRandom < 0.2f -> FoodType.SLOW_DOWN     // 5% вероятность
                 else -> FoodType.REGULAR                        // 80% вероятность
             }
-            
+
             return Food(position, foodType)
         }
-        
+
         private fun generateObstacles(snake: List<GridPosition>, food: Food): List<Obstacle> {
             val obstacles = mutableListOf<Obstacle>()
             val obstacleCount = 5 // Начинаем с 5 препятствий
-            
+
             // Создаем случайные препятствия
             while (obstacles.size < obstacleCount) {
                 val x = Random.nextInt(gridWidth)
                 val y = Random.nextInt(gridHeight)
                 val position = GridPosition(x, y)
-                
+
                 // Проверяем, что препятствие не накладывается на змею или еду
                 val isOverlappingSnake = snake.any { it.x == position.x && it.y == position.y }
                 val isOverlappingFood = food.position.x == position.x && food.position.y == position.y
                 val isOverlappingObstacle = obstacles.any { it.position.x == position.x && it.position.y == position.y }
-                
+
                 if (!isOverlappingSnake && !isOverlappingFood && !isOverlappingObstacle) {
                     obstacles.add(Obstacle(position))
                 }
             }
-            
+
             return obstacles
         }
-        
+
         private fun handleGameOver(getState: () -> GameState) {
             val currentState = getState()
             if (currentState.gameState == GameStateEnum.GameOver && !currentState.deathAnimationActive) {
                 publish(GameLabel.ShowSaveScoreDialog)
             }
         }
-        
+
         private fun handleSaveScore(name: String, getState: () -> GameState) {
             val currentState = getState()
             publish(GameLabel.NavigateToLeaderboard(
-                score = currentState.score, 
-                speedFactor = currentState.speedFactor, 
+                score = currentState.score,
+                speedFactor = currentState.speedFactor,
                 playerName = name
             ))
         }
-        
+
         private fun handleDismissSaveScore(getState: () -> GameState) {
             val currentState = getState()
             publish(GameLabel.NavigateToLeaderboard(
-                score = currentState.score, 
-                speedFactor = currentState.speedFactor, 
+                score = currentState.score,
+                speedFactor = currentState.speedFactor,
                 playerName = null
             ))
         }
     }
-    
+
     /**
      * Результаты операций для обновления состояния
      */
@@ -435,7 +435,7 @@ class GameStoreFactory(
         data class ShowInstructions(val show: Boolean) : Result
         data class Error(val message: String) : Result
     }
-    
+
     /**
      * Редуктор для обновления состояния на основе результатов
      */
@@ -467,4 +467,4 @@ class GameStoreFactory(
                 is Result.Error -> copy(isLoading = false, error = result.message)
             }
     }
-} 
+}

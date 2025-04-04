@@ -28,18 +28,18 @@ class LeaderboardStoreFactory(
             executorFactory = { createExecutor() },
             reducer = ReducerImpl
         ) {}
-    
+
     private fun createExecutor() = object : CoroutineExecutor<LeaderboardIntent, Unit, LeaderboardState, Result, LeaderboardLabel>(
         Dispatchers.Main
     ) {
         init {
             loadScores()
         }
-        
+
         override fun executeAction(action: Unit, getState: () -> LeaderboardState) {
             // Нет действий для обработки в этом сторе
         }
-        
+
         override fun executeIntent(intent: LeaderboardIntent, getState: () -> LeaderboardState) {
             when (intent) {
                 is LeaderboardIntent.LoadScores -> loadScores()
@@ -47,7 +47,7 @@ class LeaderboardStoreFactory(
                 is LeaderboardIntent.OpenSettings -> publish(LeaderboardLabel.NavigateToSettings)
             }
         }
-        
+
         private fun loadScores() {
             scope.launch {
                 dispatch(Result.Loading)
@@ -63,7 +63,7 @@ class LeaderboardStoreFactory(
             }
         }
     }
-    
+
     /**
      * Результаты операций для обновления состояния
      */
@@ -72,7 +72,7 @@ class LeaderboardStoreFactory(
         data class ScoresLoaded(val scores: List<ru.andvl.snakegame.data.PlayerScore>) : Result
         data class Error(val message: String) : Result
     }
-    
+
     /**
      * Редуктор для обновления состояния на основе результатов
      */
@@ -84,4 +84,4 @@ class LeaderboardStoreFactory(
                 is Result.Error -> copy(error = result.message, isLoading = false)
             }
     }
-} 
+}

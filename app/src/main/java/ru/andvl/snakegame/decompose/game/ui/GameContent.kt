@@ -48,10 +48,10 @@ fun GameContent(
 ) {
     val state by component.state.subscribeAsState()
     val showSaveScoreDialog by component.showSaveScoreDialog.subscribeAsState()
-    
+
     // Состояние для диалога подтверждения выхода
     var showExitConfirmationDialog by remember { mutableStateOf(false) }
-    
+
     // Перехватчик кнопки назад
     BackHandler(enabled = true) {
         if (state.gameState == GameState.Running) {
@@ -63,19 +63,19 @@ fun GameContent(
             component.onBackPressed()
         }
     }
-    
+
     // Проверка на конец игры
     LaunchedEffect(state.gameState, state.deathAnimationActive) {
         if (state.gameState == GameState.GameOver && !state.deathAnimationActive && !showSaveScoreDialog) {
             component.handleGameOver()
         }
     }
-    
+
     // Показываем диалог с инструкциями при необходимости
     if (state.showInstructions) {
         GameInstructionsDialog(onDismiss = component::onDismissInstructions)
     }
-    
+
     // Основной контент экрана
     Column(
         modifier = modifier
@@ -91,20 +91,20 @@ fun GameContent(
             modifier = Modifier.padding(bottom = 8.dp),
             textAlign = TextAlign.Center
         )
-        
+
         // Информационная панель (счет и скорость)
         InfoPanel(
             score = state.score,
             speedFactor = state.speedFactor,
             modifier = Modifier.fillMaxWidth()
         )
-        
+
         // Легенда типов еды
         FoodLegend(modifier = Modifier.fillMaxWidth())
-        
+
         // Игровое поле
         val displayFood = state.food?.let { GameModelConverter.convertFoodToDisplayGameFood(it) }
-        
+
         GameBoard(
             snakeParts = GameModelConverter.convertGridPositionsToSnakeParts(state.snakeParts),
             food = displayFood,
@@ -112,26 +112,26 @@ fun GameContent(
             isGameOver = state.deathAnimationActive,
             doubleScoreActive = state.doubleScoreActive,
             pulsatingSpeedActive = state.pulsatingSpeedActive,
-            onDirectionChange = { 
+            onDirectionChange = {
                 component.onDirectionChange(GameModelConverter.convertDirection(it))
             },
             modifier = Modifier.fillMaxWidth()
         )
-        
+
         // Небольшой отступ между полем и элементами управления
         Spacer(modifier = Modifier.height(4.dp))
-        
+
         // Элементы управления направлением
         GameDirectionControls(
-            onDirectionChange = { 
+            onDirectionChange = {
                 component.onDirectionChange(GameModelConverter.convertDirection(it))
             },
             modifier = Modifier.padding(vertical = 4.dp)
         )
-        
+
         // Небольшой отступ между элементами управления и кнопками действий
         Spacer(modifier = Modifier.height(4.dp))
-        
+
         // Кнопки действий
         GameActionControls(
             gameState = state.gameState,
@@ -141,7 +141,7 @@ fun GameContent(
             modifier = Modifier.padding(bottom = 8.dp)
         )
     }
-    
+
     // Диалог сохранения счета
     if (showSaveScoreDialog) {
         SaveScoreDialog(
@@ -151,12 +151,12 @@ fun GameContent(
             onDismiss = component::onDismissSaveScore
         )
     }
-    
+
     // Диалог подтверждения выхода
     if (showExitConfirmationDialog) {
         AlertDialog(
-            onDismissRequest = { 
-                showExitConfirmationDialog = false 
+            onDismissRequest = {
+                showExitConfirmationDialog = false
                 // Возобновляем игру если отменили
                 if (state.gameState == GameState.Paused) {
                     component.onPlayPauseClick()
@@ -173,8 +173,8 @@ fun GameContent(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { 
-                    showExitConfirmationDialog = false 
+                TextButton(onClick = {
+                    showExitConfirmationDialog = false
                     // Возобновляем игру если отменили
                     if (state.gameState == GameState.Paused) {
                         component.onPlayPauseClick()
@@ -185,4 +185,4 @@ fun GameContent(
             }
         )
     }
-} 
+}

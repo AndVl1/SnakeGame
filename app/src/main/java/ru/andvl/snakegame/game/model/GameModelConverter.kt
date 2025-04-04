@@ -39,18 +39,6 @@ object GameModelConverter {
     }
 
     /**
-     * Конвертирует Direction из нового формата в старый
-     */
-    fun convertDirection(direction: NewDirection): OldDirection {
-        return when (direction) {
-            NewDirection.UP -> OldDirection.UP
-            NewDirection.DOWN -> OldDirection.DOWN
-            NewDirection.LEFT -> OldDirection.LEFT
-            NewDirection.RIGHT -> OldDirection.RIGHT
-        }
-    }
-
-    /**
      * Конвертирует FoodType из старого формата в новый
      */
     fun convertFoodType(foodType: OldFoodType): NewFoodType {
@@ -124,12 +112,12 @@ object GameModelConverter {
     fun convertFoodToDisplayGameFood(food: Food): DisplayGameFood {
         val gridX = food.position.x
         val gridY = food.position.y
-        
+
         // Преобразуем координаты сетки в пиксельные координаты
         // Умножаем координаты на размер ячейки и добавляем половину для центрирования
         val pixelX = gridX * CELL_SIZE + (CELL_SIZE / 2)
         val pixelY = gridY * CELL_SIZE + (CELL_SIZE / 2)
-        
+
         return DisplayGameFood(Offset(pixelX, pixelY), convertFoodType(food.type))
     }
 
@@ -140,12 +128,12 @@ object GameModelConverter {
     fun convertGameFoodToFood(gameFood: DisplayGameFood): Food {
         val pixelX = gameFood.position.x
         val pixelY = gameFood.position.y
-        
+
         // Преобразуем пиксельные координаты в координаты сетки
         // Делим координаты на размер ячейки и округляем
         val gridX = (pixelX / CELL_SIZE).toInt()
         val gridY = (pixelY / CELL_SIZE).toInt()
-        
+
         return Food(GridPosition(gridX, gridY), convertFoodType(gameFood.type))
     }
 
@@ -169,4 +157,4 @@ object GameModelConverter {
     fun convertNewSnakePartsToOldSnakeParts(snakeParts: List<NewSnakePart>): List<OldSnakePart> {
         return snakeParts.map { convertNewSnakePartToOldSnakePart(it) }
     }
-} 
+}

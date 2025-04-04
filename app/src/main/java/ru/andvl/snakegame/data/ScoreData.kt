@@ -27,7 +27,7 @@ class ScoreRepository(private val context: Context) {
         private val SCORES_KEY = stringPreferencesKey("scores")
         private val json = Json { ignoreUnknownKeys = true }
     }
-    
+
     // Получить все сохраненные результаты
     val scores: Flow<List<PlayerScore>> = context.dataStore.data.map { preferences ->
         val scoresJson = preferences[SCORES_KEY] ?: "[]"
@@ -37,12 +37,12 @@ class ScoreRepository(private val context: Context) {
             emptyList()
         }
     }
-    
+
     // Получить топ результатов
     suspend fun getTopScores(): List<PlayerScore> {
         val preferences = context.dataStore.data.first()
         val scoresJson = preferences[SCORES_KEY] ?: "[]"
-        
+
         return try {
             json.decodeFromString<List<PlayerScore>>(scoresJson)
                 .sortedByDescending { it.score }
@@ -51,7 +51,7 @@ class ScoreRepository(private val context: Context) {
             emptyList()
         }
     }
-    
+
     // Сохранить новый результат
     suspend fun addScore(playerScore: PlayerScore) {
         context.dataStore.edit { preferences ->
@@ -62,16 +62,16 @@ class ScoreRepository(private val context: Context) {
                     emptyList()
                 }
             } ?: emptyList()
-            
+
             // Добавляем новый результат и сортируем по убыванию очков
             val updatedScores = (currentScores + playerScore)
                 .sortedByDescending { it.score }
                 .take(10) // Оставляем только 10 лучших результатов
-            
+
             preferences[SCORES_KEY] = json.encodeToString(updatedScores)
         }
     }
-    
+
     // Очистить все результаты
     suspend fun clearAllScores() {
         context.dataStore.edit { preferences ->
