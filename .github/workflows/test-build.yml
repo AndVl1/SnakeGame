@@ -17,19 +17,17 @@ on:
       - 'develop'
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      test_version: ${{ steps.version.outputs.TEST_VERSION }}
+      build_number: ${{ steps.buildnumber.outputs.build_number }}
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    
-    # Сохраняем время начала сборки
-    - name: Set build start time
-      id: build-time-start
-      run: echo "BUILD_START=$(date +%s)" >> $GITHUB_OUTPUT
     
     - name: Generate build number
       id: buildnumber
@@ -38,6 +36,24 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         prefix: 'test'
     
+    - name: Set test version info
+      id: version
+      run: |
+        BRANCH_NAME=$(git branch --show-current)
+        BRANCH_NAME_SAFE=${BRANCH_NAME//\//-}
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        TEST_VERSION="test-${BRANCH_NAME_SAFE}-${COMMIT_HASH}-build.${{ steps.buildnumber.outputs.build_number }}"
+        echo "TEST_VERSION=$TEST_VERSION" >> $GITHUB_OUTPUT
+
+  setup:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
@@ -45,14 +61,12 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
-    # Установка Android SDK Build Tools
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
       with:
         cmdline-tools-version: '8.0'
         packages: 'build-tools;33.0.0,build-tools;30.0.3,build-tools;29.0.3,platforms;android-35'
-
-    # Кэширование Gradle Wrapper
+    
     - name: Cache Gradle Wrapper
       uses: actions/cache@v3
       with:
@@ -61,7 +75,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-wrapper-
     
-    # Кэширование зависимостей Gradle
     - name: Cache Gradle dependencies
       uses: actions/cache@v3
       with:
@@ -73,7 +86,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     
-    # Кэширование Maven репозитория
     - name: Cache Maven repository
       uses: actions/cache@v3
       with:
@@ -82,7 +94,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-maven-
     
-    # Кэширование Android SDK
     - name: Cache Android SDK
       uses: actions/cache@v3
       with:
@@ -93,131 +104,36 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-android-sdk-
     
-    # Кэширование результатов сборки
-    - name: Cache Build results
-      uses: actions/cache@v3
-      with:
-        path: app/build
-        key: ${{ runner.os }}-app-build-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-app-build-
-    
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+
+  build-debug:
+    needs: [prepare, setup]
+    runs-on: ubuntu-latest
+    env:
+      TRACER_APP_TOKEN: ${{ secrets.TRACER_APP_TOKEN }}
+      TRACER_PLUGIN_TOKEN: ${{ secrets.TRACER_PLUGIN_TOKEN }}
+      APP_METRICA_API_KEY: ${{ secrets.APP_METRICA_API_KEY }}
     
-    # Формируем имя тестовой сборки
-    - name: Set test version info
-      id: version
-      run: |
-        BRANCH_NAME=$(git branch --show-current)
-        # Заменяем слэши на дефисы в имени ветки
-        BRANCH_NAME_SAFE=${BRANCH_NAME//\//-}
-        COMMIT_HASH=$(git rev-parse --short HEAD)
-        TEST_VERSION="test-${BRANCH_NAME_SAFE}-${COMMIT_HASH}-build.${{ steps.buildnumber.outputs.build_number }}"
-        echo "Test версия: $TEST_VERSION"
-        echo "TEST_VERSION=$TEST_VERSION" >> $GITHUB_OUTPUT
-
-    # Выводим информацию о наличии и расположении Android SDK и build-tools
-    - name: Check Android SDK and build-tools
-      run: |
-        echo "==== ANDROID_HOME environment variable ===="
-        echo $ANDROID_HOME
-        
-        echo -e "\n==== Android SDK Directory Structure ===="
-        if [ -d "$ANDROID_HOME" ]; then
-          ls -la $ANDROID_HOME
-        else
-          echo "ANDROID_HOME directory does not exist!"
-        fi
-        
-        echo -e "\n==== Build Tools Directory ===="
-        if [ -d "$ANDROID_HOME/build-tools" ]; then
-          ls -la $ANDROID_HOME/build-tools
-        else
-          echo "Build Tools directory does not exist!"
-        fi
-        
-        echo -e "\n==== Available Build Tools Versions ===="
-        for version in 35.0.0 35.0.1 33.0.0 30.0.3 29.0.3; do
-          echo "Checking build-tools/$version:"
-          if [ -d "$ANDROID_HOME/build-tools/$version" ]; then
-            ls -la $ANDROID_HOME/build-tools/$version
-            
-            echo -e "\nChecking if zipalign exists in build-tools/$version:"
-            if [ -f "$ANDROID_HOME/build-tools/$version/zipalign" ]; then
-              echo "✅ zipalign found in build-tools/$version"
-              file $ANDROID_HOME/build-tools/$version/zipalign
-              ls -la $ANDROID_HOME/build-tools/$version/zipalign
-            else
-              echo "❌ zipalign NOT found in build-tools/$version"
-            fi
-          else
-            echo "❌ build-tools/$version directory not found"
-          fi
-          echo -e "\n----------\n"
-        done
-        
-        echo -e "\n==== Android SDK Root Structure ===="
-        if [ -d "/usr/local/lib/android" ]; then
-          ls -la /usr/local/lib/android
-          
-          if [ -d "/usr/local/lib/android/sdk" ]; then
-            echo -e "\n==== Android SDK Alternative Location Structure ===="
-            ls -la /usr/local/lib/android/sdk
-            
-            if [ -d "/usr/local/lib/android/sdk/build-tools" ]; then
-              echo -e "\n==== Android SDK Alternative Build Tools ===="
-              ls -la /usr/local/lib/android/sdk/build-tools
-            fi
-          fi
-        fi
-        
-        echo -e "\n==== System PATH Variable ===="
-        echo $PATH
-        
-        echo -e "\n==== Find zipalign in system ===="
-        find /usr/local -name "zipalign" 2>/dev/null || echo "zipalign not found in /usr/local"
-        
-        echo -e "\n==== Check specific build tools location ===="
-        if [ -d "/usr/local/lib/android/sdk/build-tools/33.0.0" ]; then
-          echo "Contents of /usr/local/lib/android/sdk/build-tools/33.0.0:"
-          ls -la /usr/local/lib/android/sdk/build-tools/33.0.0
-          
-          if [ -f "/usr/local/lib/android/sdk/build-tools/33.0.0/zipalign" ]; then
-            echo "✅ zipalign exists in alternative location"
-            echo "File type:"
-            file /usr/local/lib/android/sdk/build-tools/33.0.0/zipalign
-            echo "File permissions:"
-            ls -la /usr/local/lib/android/sdk/build-tools/33.0.0/zipalign
-            
-            echo "Making sure zipalign is executable:"
-            chmod +x /usr/local/lib/android/sdk/build-tools/33.0.0/zipalign
-          else
-            echo "❌ zipalign not found in alternative location"
-          fi
-        else
-          echo "Alternative build-tools directory does not exist"
-        fi
-
-      # Устанавливаем переменные окружения для аналитики
-    - name: Setup analytics environment
-      run: |
-        echo "TRACER_APP_TOKEN=${{ secrets.TRACER_APP_TOKEN }}" >> $GITHUB_ENV
-        echo "TRACER_PLUGIN_TOKEN=${{ secrets.TRACER_PLUGIN_TOKEN }}" >> $GITHUB_ENV
-        echo "APP_METRICA_API_KEY=${{ secrets.APP_METRICA_API_KEY }}" >> $GITHUB_ENV
-
-    # Собираем debug-версию с оптимизациями
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Set build start time
+      id: build-time-start
+      run: echo "BUILD_START=$(date +%s)" >> $GITHUB_OUTPUT
+    
     - name: Build debug APK
       run: ./gradlew assembleDebug --build-cache --parallel --no-daemon
-
-
-    # Подписываем debug APK
+    
     - name: Sign Debug APK
       id: sign_debug_apk
       uses: r0adkll/sign-android-release@v1
       env:
         BUILD_TOOLS_VERSION: "35.0.0"
-        ANDROID_HOME: "/usr/local/lib/android/sdk" # Явно задаем путь к Android SDK
+        ANDROID_HOME: "/usr/local/lib/android/sdk"
       with:
         releaseDirectory: app/build/outputs/apk/debug
         signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
@@ -225,56 +141,112 @@ jobs:
         keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
         keyPassword: ${{ secrets.KEY_PASSWORD }}
     
-    # Переименовываем APK файл, добавляя информацию о версии
-    - name: Rename APK file
+    - name: Rename Debug APK
       run: |
         mkdir -p renamed_apk
-        echo "Signed file path from action output: ${{ steps.sign_debug_apk.outputs.signedReleaseFile }}"
-        
-        # Проверка наличия файла
         if [ -f "${{ steps.sign_debug_apk.outputs.signedReleaseFile }}" ]; then
-          echo "✅ Signed APK file exists at: ${{ steps.sign_debug_apk.outputs.signedReleaseFile }}"
-          ls -la ${{ steps.sign_debug_apk.outputs.signedReleaseFile }}
+          cp "${{ steps.sign_debug_apk.outputs.signedReleaseFile }}" "renamed_apk/app-debug-signed-${{ needs.prepare.outputs.test_version }}.apk"
         else
-          echo "❌ Signed APK file does NOT exist at: ${{ steps.sign_debug_apk.outputs.signedReleaseFile }}"
-          echo "Checking debug output directory:"
-          ls -la app/build/outputs/apk/debug/
-        fi
-        
-        # Проверяем, что путь для сохранения корректен
-        DEST_FILE="renamed_apk/app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}.apk"
-        echo "Destination file: $DEST_FILE"
-        
-        # Копируем файл с обработкой ошибок
-        if [ -f "${{ steps.sign_debug_apk.outputs.signedReleaseFile }}" ]; then
-          cp "${{ steps.sign_debug_apk.outputs.signedReleaseFile }}" "$DEST_FILE"
-          echo "✅ File copied successfully to: $DEST_FILE"
-          ls -la "$DEST_FILE"
-        else
-          # Ищем альтернативные файлы в случае проблем с signedReleaseFile
-          ALTERNATIVE_FILE="app/build/outputs/apk/debug/app-debug-signed.apk"
-          if [ -f "$ALTERNATIVE_FILE" ]; then
-            echo "🔍 Using alternative file: $ALTERNATIVE_FILE"
-            cp "$ALTERNATIVE_FILE" "$DEST_FILE"
-            echo "✅ Alternative file copied successfully"
-          else
-            echo "❌ No signed APK found. Build might have failed."
-            exit 1
-          fi
+          cp "app/build/outputs/apk/debug/app-debug-signed.apk" "renamed_apk/app-debug-signed-${{ needs.prepare.outputs.test_version }}.apk"
         fi
     
-    # Загружаем подписанный debug APK
-    - name: Upload Signed Debug APK
-      if: ${{ success() }} # Выполнять только если предыдущие шаги успешны
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}
-        path: renamed_apk/app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}.apk
+        name: app-debug-signed-${{ needs.prepare.outputs.test_version }}
+        path: renamed_apk/app-debug-signed-${{ needs.prepare.outputs.test_version }}.apk
         retention-days: 7
-        if-no-files-found: warn # Предупреждать вместо ошибки
+        if-no-files-found: warn
         overwrite: true
         compression-level: 0
         content-type: application/vnd.android.package-archive
+
+  build-release:
+    needs: [prepare, setup]
+    runs-on: ubuntu-latest
+    env:
+      TRACER_APP_TOKEN: ${{ secrets.TRACER_APP_TOKEN }}
+      TRACER_PLUGIN_TOKEN: ${{ secrets.TRACER_PLUGIN_TOKEN }}
+      APP_METRICA_API_KEY: ${{ secrets.APP_METRICA_API_KEY }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Set build start time
+      id: build-time-start
+      run: echo "BUILD_START=$(date +%s)" >> $GITHUB_OUTPUT
+    
+    - name: Build release APK
+      run: ./gradlew assembleRelease --build-cache --parallel --no-daemon
+    
+    - name: Sign Release APK
+      id: sign_release_apk
+      uses: r0adkll/sign-android-release@v1
+      env:
+        BUILD_TOOLS_VERSION: "35.0.0"
+        ANDROID_HOME: "/usr/local/lib/android/sdk"
+      with:
+        releaseDirectory: app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        alias: ${{ secrets.KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+    
+    - name: Rename Release APK
+      run: |
+        mkdir -p renamed_apk
+        if [ -f "${{ steps.sign_release_apk.outputs.signedReleaseFile }}" ]; then
+          cp "${{ steps.sign_release_apk.outputs.signedReleaseFile }}" "renamed_apk/app-release-signed-${{ needs.prepare.outputs.test_version }}.apk"
+        else
+          cp "app/build/outputs/apk/release/app-release-signed.apk" "renamed_apk/app-release-signed-${{ needs.prepare.outputs.test_version }}.apk"
+        fi
+    
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-signed-${{ needs.prepare.outputs.test_version }}
+        path: renamed_apk/app-release-signed-${{ needs.prepare.outputs.test_version }}.apk
+        retention-days: 7
+        if-no-files-found: warn
+        overwrite: true
+        compression-level: 0
+        content-type: application/vnd.android.package-archive
+
+  notify:
+    needs: [build-debug, build-release]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Find Comment
+      if: github.event_name == 'pull_request'
+      uses: peter-evans/find-comment@v2
+      id: fc
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: Test Build
+
+    - name: Create or update comment with APK links
+      if: github.event_name == 'pull_request'
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          ### 🚀 Test Build для PR
+          
+          Тестовая сборка **${{ needs.prepare.outputs.test_version }}** готова ✅
+          
+          [Скачать подписанный Debug APK](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          [Скачать подписанный Release APK](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          *Артефакты:*
+          - `app-debug-signed-${{ needs.prepare.outputs.test_version }}`
+          - `app-release-signed-${{ needs.prepare.outputs.test_version }}`
+        edit-mode: replace
+        reactions: rocket
     
     # Расчет времени сборки
     - name: Calculate build time
@@ -300,42 +272,13 @@ jobs:
     - name: Add build summary
       run: |
         echo "### 🚀 Тестовая сборка завершена" >> $GITHUB_STEP_SUMMARY
-        echo "**Версия:** ${{ steps.version.outputs.TEST_VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Версия:** ${{ needs.prepare.outputs.test_version }}" >> $GITHUB_STEP_SUMMARY
         echo "**Время сборки:** ${{ steps.build-time.outputs.build_time }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Артефакт:** app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Артефакт:** app-debug-signed-${{ needs.prepare.outputs.test_version }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Commit SHA:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
         echo "**Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
         echo "**Runid:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
-    
-    # Добавляем комментарий к PR, если сборка запущена через PR
-    - name: Find Comment
-      if: github.event_name == 'pull_request'
-      uses: peter-evans/find-comment@v2
-      id: fc
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        comment-author: 'github-actions[bot]'
-        body-includes: Test Build
-
-    - name: Create or update comment with APK link
-      if: github.event_name == 'pull_request'
-      uses: peter-evans/create-or-update-comment@v2
-      with:
-        comment-id: ${{ steps.fc.outputs.comment-id }}
-        issue-number: ${{ github.event.pull_request.number }}
-        body: |
-          ### 🚀 Test Build для PR
-          
-          Тестовая сборка **${{ steps.version.outputs.TEST_VERSION }}** готова ✅
-          
-          [Скачать подписанный Debug APK](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          
-          *Артефакт: `app-debug-signed-${{ steps.version.outputs.TEST_VERSION }}`*
-          
-          **Время сборки:** ${{ steps.build-time.outputs.build_time }}
-        edit-mode: replace
-        reactions: rocket
     
     # Очистка кэшей в редких случаях
     - name: Cleanup Gradle Cache
