@@ -108,32 +108,11 @@ func handleUpdate(update types.Update) {
 }
 
 func handleCommand(message *types.Message) {
-	switch {
-	case message.Text == "/start":
+	switch message.Text {
+	case "/start":
 		showMainMenu(message.ChatID)
-	case message.Text == "/help":
+	case "/help":
 		showHelp(message.ChatID)
-	case strings.HasPrefix(message.Text, "/start cancel_release_"):
-		// Отправляем сообщение о начале отмены
-		if err := api.SendMessage(message.ChatID, "🔄 Отмена создания релиза...", nil); err != nil {
-			log.Printf("Ошибка отправки сообщения: %v", err)
-			return
-		}
-
-		// Удаляем ветку release/develop-to-main
-		client := github.NewClient(config.GitHubToken, fmt.Sprintf("%s/%s", config.GitHubOwner, config.GitHubRepo))
-		if err := client.DeleteBranch("release/develop-to-main"); err != nil {
-			log.Printf("Ошибка удаления ветки: %v", err)
-			if err := api.SendMessage(message.ChatID, "❌ Ошибка при отмене релиза", nil); err != nil {
-				log.Printf("Ошибка отправки сообщения: %v", err)
-			}
-			return
-		}
-
-		// Отправляем сообщение об успешной отмене
-		if err := api.SendMessage(message.ChatID, "✅ Создание релиза отменено\nВетка release/develop-to-main удалена", nil); err != nil {
-			log.Printf("Ошибка отправки сообщения: %v", err)
-		}
 	default:
 		showMainMenu(message.ChatID)
 	}
