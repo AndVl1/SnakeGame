@@ -80,6 +80,10 @@
     <string name="language_settings">Language Settings</string>
     <string name="change_language">Change Language</string>
     <string name="system_language">System Language</string>
+    <string name="sound_effects">Sound Effects</string>
+    <string name="sound_effects_description">Play sounds during gameplay</string>
+    <string name="haptic_feedback">Haptic Feedback</string>
+    <string name="haptic_feedback_description">Enable vibration feedback</string>
     
     <!-- Leaderboard screen -->
     <string name="leaderboard_title">Leaderboard</string>

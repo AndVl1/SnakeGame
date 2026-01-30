@@ -19,7 +19,11 @@ fun SettingsContent(
 
     SettingsScreen(
         isDarkTheme = state.isDarkTheme,
+        soundsEnabled = state.soundsEnabled,
+        vibrationsEnabled = state.vibrationsEnabled,
         onThemeToggled = { component.onThemeToggled() },
+        onSoundsToggled = { component.onSoundsToggled() },
+        onVibrationsToggled = { component.onVibrationsToggled() },
         onBackClicked = { component.onBackClicked() },
         modifier = modifier
     )

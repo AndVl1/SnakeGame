@@ -17,10 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.andvl.snakegame.R
+import ru.andvl.snakegame.main.TestTags
 
 /**
  * Экран настроек
@@ -28,7 +30,11 @@ import ru.andvl.snakegame.R
 @Composable
 fun SettingsScreen(
     isDarkTheme: Boolean,
+    soundsEnabled: Boolean = true,
+    vibrationsEnabled: Boolean = true,
     onThemeToggled: () -> Unit,
+    onSoundsToggled: (() -> Unit)? = null,
+    onVibrationsToggled: (() -> Unit)? = null,
     onBackClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -36,13 +42,17 @@ fun SettingsScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
+            .testTag(TestTags.SETTINGS_SCREEN)
     ) {
         // Заголовок с кнопкой назад
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBackClicked) {
+            IconButton(
+                onClick = onBackClicked,
+                modifier = Modifier.testTag(TestTags.SETTINGS_BACK_BUTTON)
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.back)
@@ -62,6 +72,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
+                .testTag(TestTags.SETTINGS_CARD)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -87,8 +98,61 @@ fun SettingsScreen(
                     
                     Switch(
                         checked = isDarkTheme,
-                        onCheckedChange = { onThemeToggled() }
+                        onCheckedChange = { onThemeToggled() },
+                        modifier = Modifier.testTag(TestTags.SETTINGS_THEME_SWITCH)
                     )
+                }
+
+                // Переключатель звуков
+                onSoundsToggled?.let { callback ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.sound_effects),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.sound_effects_description),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Switch(
+                            checked = soundsEnabled,
+                            onCheckedChange = { callback() }
+                        )
+                    }
+                }
+
+                // Переключатель вибрации
+                onVibrationsToggled?.let { callback ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.haptic_feedback),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.haptic_feedback_description),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Switch(
+                            checked = vibrationsEnabled,
+                            onCheckedChange = { callback() }
+                        )
+                    }
                 }
             }
         }
