@@ -49,6 +49,7 @@ fun GameBoard(
     pulsatingSpeedActive: Boolean,
     modifier: Modifier = Modifier,
     boardSize: Int = GRID_SIZE, // Используем константу из единого источника
+    swipeSensitivity: Float = 1.0f,
     onDirectionChange: (Direction) -> Unit,
 ) {
     // Анимация пульсации для смерти
@@ -79,16 +80,24 @@ fun GameBoard(
                 scaleX = if (isGameOver) pulseScale else 1f
                 scaleY = if (isGameOver) pulseScale else 1f
             }
-            .pointerInput(Unit) {
+            .pointerInput(swipeSensitivity) {
                 detectDragGestures { change, dragAmount ->
                     change.consume()
                     val (x, y) = dragAmount
+
+                    // Базовый порог для свайпа
+                    val baseThreshold = 20f
+
+                    // Вычисляем динамический порог на основе чувствительности
+                    // Чем выше sensitivity, тем НИЖЕ порог (более чувствительно)
+                    val threshold = baseThreshold / swipeSensitivity
+
                     when {
-                        abs(x) > abs(y) -> {
+                        abs(x) > abs(y) && abs(x) > threshold -> {
                             if (x > 0) onDirectionChange(Direction.RIGHT)
                             else onDirectionChange(Direction.LEFT)
                         }
-                        else -> {
+                        abs(y) > abs(x) && abs(y) > threshold -> {
                             if (y > 0) onDirectionChange(Direction.DOWN)
                             else onDirectionChange(Direction.UP)
                         }

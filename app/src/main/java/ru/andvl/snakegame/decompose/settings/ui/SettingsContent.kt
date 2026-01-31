@@ -21,9 +21,13 @@ fun SettingsContent(
         isDarkTheme = state.isDarkTheme,
         soundsEnabled = state.soundsEnabled,
         vibrationsEnabled = state.vibrationsEnabled,
+        difficulty = state.difficulty,
+        swipeSensitivity = state.swipeSensitivity,
         onThemeToggled = { component.onThemeToggled() },
         onSoundsToggled = { component.onSoundsToggled() },
         onVibrationsToggled = { component.onVibrationsToggled() },
+        onDifficultySelected = { component.onDifficultySelected(it) },
+        onSwipeSensitivityChanged = { component.onSwipeSensitivitySelected(it) },
         onBackClicked = { component.onBackClicked() },
         modifier = modifier
     )

@@ -39,7 +39,10 @@ data class GameSettings(
     val appLocale: String = "",
 
     // Цветовая тема игры (0=CLASSIC, 1=OCEAN, 2=FOREST, 3=SUNSET, 4=NEON, 5=CANDY)
-    val colorTheme: Int = 0
+    val colorTheme: Int = 0,
+
+    // Чувствительность свайпов (0.5f = низкая, 1.0f = средняя, 1.5f = высокая, 2.0f = очень высокая)
+    val swipeSensitivity: Float = 1.0f
 ) {
     companion object {
         // Ключи для DataStore
@@ -53,5 +56,6 @@ data class GameSettings(
         val SPECIAL_FOOD_FREQUENCY_KEY = intPreferencesKey("special_food_frequency")
         val APP_LOCALE_KEY = stringPreferencesKey("app_locale")
         val COLOR_THEME_KEY = intPreferencesKey("color_theme")
+        val SWIPE_SENSITIVITY_KEY = floatPreferencesKey("swipe_sensitivity")
     }
 }

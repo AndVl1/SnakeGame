@@ -141,6 +141,7 @@ fun GameContent(
                     isGameOver = state.deathAnimationActive,
                     doubleScoreActive = state.doubleScoreActive,
                     pulsatingSpeedActive = state.pulsatingSpeedActive,
+                    swipeSensitivity = state.swipeSensitivity,
                     onDirectionChange = {
                         component.onDirectionChange(GameModelConverter.convertDirection(it))
                     },
