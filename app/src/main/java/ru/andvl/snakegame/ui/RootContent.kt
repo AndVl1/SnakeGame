@@ -52,13 +52,29 @@ fun RootContent(
                 )
             }
             is RootComponent.Child.Replays -> {
+                val state by instance.component.state.subscribeAsState()
                 ReplayScreen(
-                    component = instance.component
+                    replays = state.replays,
+                    isLoading = state.isLoading,
+                    onWatchClick = instance.component::onWatchReplay,
+                    onDeleteClick = instance.component::onDeleteReplay,
+                    onBackClick = instance.component::onBackClick
                 )
             }
             is RootComponent.Child.ReplayPlayer -> {
+                val state by instance.component.state.subscribeAsState()
                 ReplayPlayerScreen(
-                    component = instance.component
+                    gameUiState = state.gameUiState,
+                    isPlaying = state.isPlaying,
+                    isPaused = state.isPaused,
+                    playbackSpeed = state.playbackSpeed,
+                    currentProgress = state.currentProgress,
+                    isLoading = state.isLoading,
+                    onPlayClick = instance.component::onPlay,
+                    onPauseClick = instance.component::onPause,
+                    onResumeClick = instance.component::onResume,
+                    onSpeedChange = instance.component::onSpeedChange,
+                    onBackClick = instance.component::onBackClick
                 )
             }
         }
