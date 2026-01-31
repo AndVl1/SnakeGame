@@ -56,8 +56,8 @@ fun RootContent(
                 ReplayScreen(
                     replays = state.replays,
                     isLoading = state.isLoading,
-                    onWatchClick = instance.component::onWatchReplay,
-                    onDeleteClick = instance.component::onDeleteReplay,
+                    onWatchClick = instance.component::onWatchReplayClick,
+                    onDeleteClick = instance.component::onDeleteReplayClick,
                     onBackClick = instance.component::onBackClick
                 )
             }
@@ -70,10 +70,10 @@ fun RootContent(
                     playbackSpeed = state.playbackSpeed,
                     currentProgress = state.currentProgress,
                     isLoading = state.isLoading,
-                    onPlayClick = instance.component::onPlay,
-                    onPauseClick = instance.component::onPause,
-                    onResumeClick = instance.component::onResume,
-                    onSpeedChange = instance.component::onSpeedChange,
+                    onPlayClick = instance.component::onPlayClick,
+                    onPauseClick = instance.component::onPauseClick,
+                    onResumeClick = instance.component::onResumeClick,
+                    onSpeedChange = instance.component::onPlaybackSpeedChange,
                     onBackClick = instance.component::onBackClick
                 )
             }
