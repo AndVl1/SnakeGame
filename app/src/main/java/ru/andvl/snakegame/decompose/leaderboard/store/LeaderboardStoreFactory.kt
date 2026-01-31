@@ -47,6 +47,7 @@ class LeaderboardStoreFactory(
                 is LeaderboardIntent.OpenSettings -> publish(LeaderboardLabel.NavigateToSettings)
                 is LeaderboardIntent.OpenAchievements -> publish(LeaderboardLabel.NavigateToAchievements)
                 is LeaderboardIntent.OpenStatistics -> publish(LeaderboardLabel.NavigateToStatistics)
+                is LeaderboardIntent.OpenReplays -> publish(LeaderboardLabel.NavigateToReplays)
             }
         }
 

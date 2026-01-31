@@ -51,6 +51,16 @@ fun RootContent(
                     component = instance.component
                 )
             }
+            is RootComponent.Child.Replays -> {
+                ReplayScreen(
+                    component = instance.component
+                )
+            }
+            is RootComponent.Child.ReplayPlayer -> {
+                ReplayPlayerScreen(
+                    component = instance.component
+                )
+            }
         }
     }
 } 

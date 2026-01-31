@@ -26,6 +26,7 @@ sealed interface LeaderboardIntent {
     object OpenSettings : LeaderboardIntent
     object OpenAchievements : LeaderboardIntent
     object OpenStatistics : LeaderboardIntent
+    object OpenReplays : LeaderboardIntent
 }
 
 /**
@@ -36,5 +37,6 @@ sealed interface LeaderboardLabel {
     object NavigateToSettings : LeaderboardLabel
     object NavigateToAchievements : LeaderboardLabel
     object NavigateToStatistics : LeaderboardLabel
+    object NavigateToReplays : LeaderboardLabel
     data class ShowMessage(val message: String) : LeaderboardLabel
 } 
