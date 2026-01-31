@@ -2,6 +2,7 @@ package ru.andvl.snakegame
 
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.main.store.DefaultStoreFactory
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -13,6 +14,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import ru.andvl.snakegame.data.SettingsRepository
 import ru.andvl.snakegame.decompose.game.store.GameIntent
 import ru.andvl.snakegame.decompose.game.store.GameStoreFactory
 import ru.andvl.snakegame.game.model.Direction
@@ -23,13 +25,15 @@ class GameStoreFactoryTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var storeFactory: StoreFactory
+    private lateinit var settingsRepository: SettingsRepository
     private lateinit var gameStoreFactory: GameStoreFactory
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         storeFactory = DefaultStoreFactory()
-        gameStoreFactory = GameStoreFactory(storeFactory)
+        settingsRepository = mockk(relaxed = true)
+        gameStoreFactory = GameStoreFactory(storeFactory, settingsRepository)
     }
 
     @After
