@@ -26,6 +26,7 @@ data class GameState(
     val deathAnimationActive: Boolean = false,
     val showInstructions: Boolean = false,
     val gameState: GameStateEnum = GameStateEnum.Paused,
+    val swipeSensitivity: Float = 1.0f,
     val isLoading: Boolean = false,
     val error: String? = null
 )

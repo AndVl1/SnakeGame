@@ -8,12 +8,18 @@ import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import ru.andvl.snakegame.data.SettingsRepository
+import ru.andvl.snakegame.game.model.Difficulty
+import ru.andvl.snakegame.game.model.DifficultySettings
 import ru.andvl.snakegame.game.model.Direction
 import ru.andvl.snakegame.game.model.Food
 import ru.andvl.snakegame.game.model.FoodType
 import ru.andvl.snakegame.game.model.GameConstants
+import ru.andvl.snakegame.game.model.GameSettings
 import ru.andvl.snakegame.game.model.GridPosition
 import ru.andvl.snakegame.game.model.Obstacle
 import kotlin.random.Random
@@ -23,7 +29,8 @@ import ru.andvl.snakegame.game.model.GameState as GameStateEnum
  * Фабрика для создания GameStore, содержащего логику игры
  */
 class GameStoreFactory(
-    private val storeFactory: StoreFactory
+    private val storeFactory: StoreFactory,
+    private val settingsRepository: SettingsRepository
 ) {
     companion object {
         // Используем константу из единого источника
@@ -52,7 +59,11 @@ class GameStoreFactory(
         private var nextDirection = Direction.RIGHT
         private var gridWidth = BOARD_SIZE
         private var gridHeight = BOARD_SIZE
-        private var gameSpeed = 150L  // Начальная скорость
+        private var baseGameSpeed = 150L  // Базовая скорость (используется для расчетов)
+        private var gameSpeed = 150L  // Текущая скорость игры
+        private var difficultySettings: DifficultySettings = DifficultySettings.forDifficulty(Difficulty.MEDIUM)
+        private var maxObstacles = 5  // Максимальное количество препятствий
+        private var specialFoodFrequency = 0.10f  // Вероятность появления специальной еды
 
         // Флаги для различных эффектов
         private var doubleScoreActive = false
@@ -88,6 +99,20 @@ class GameStoreFactory(
             scope.launch {
                 dispatch(Result.Loading)
                 try {
+                    // Загружаем настройки и применяем параметры сложности
+                    val settings = withContext(Dispatchers.IO) {
+                        settingsRepository.settings.firstOrNull() ?: GameSettings()
+                    }
+
+                    val difficulty = Difficulty.fromValue(settings.difficulty)
+                    difficultySettings = DifficultySettings.forDifficulty(difficulty)
+
+                    // Применяем настройки сложности
+                    baseGameSpeed = (150L / difficultySettings.initialSpeed).toLong()
+                    gameSpeed = baseGameSpeed
+                    maxObstacles = difficultySettings.maxObstacles
+                    specialFoodFrequency = difficultySettings.specialFoodFrequency
+
                     val initialSnake = listOf(
                         GridPosition(4, 4),
                         GridPosition(3, 4),
@@ -96,8 +121,12 @@ class GameStoreFactory(
                     val initialFood = generateFood(initialSnake, emptyList())
                     val initialObstacles = generateObstacles(initialSnake, initialFood)
 
-                    // Сброс скорости к начальному значению
-                    dispatch(Result.SpeedFactorChanged(1.0f))
+                    // Сброс speedFactor с учетом начальной скорости из настроек сложности
+                    dispatch(Result.SpeedFactorChanged(difficultySettings.initialSpeed))
+
+                    // Применяем чувствительность свайпов из настроек
+                    // TODO: Add SwipeSensitivityChanged result when implementing swipe sensitivity feature
+                    // dispatch(Result.SwipeSensitivityChanged(settings.swipeSensitivity))
 
                     dispatch(Result.GameInitialized(
                         snakeParts = initialSnake,
@@ -142,14 +171,10 @@ class GameStoreFactory(
             // Сбрасываем состояние
             direction = Direction.RIGHT
             nextDirection = Direction.RIGHT
-            gameSpeed = 150L
             doubleScoreActive = false
             pulsatingSpeedActive = false
 
-            // Сбрасываем значение speedFactor к начальному
-            dispatch(Result.SpeedFactorChanged(1.0f))
-
-            // Инициализируем новую игру
+            // Инициализируем новую игру (настройки сложности будут загружены в initGame)
             initGame()
         }
 
@@ -347,14 +372,14 @@ class GameStoreFactory(
                 GridPosition(0, 0)
             }
 
-            // Выбираем тип еды с разными вероятностями
+            // Выбираем тип еды с вероятностями, зависящими от сложности
             val foodTypeRandom = Random.nextFloat()
             val foodType = when {
-                foodTypeRandom < 0.05f -> FoodType.DOUBLE_SCORE // 5% вероятность
-                foodTypeRandom < 0.1f -> FoodType.SPEED_BOOST   // 5% вероятность
-                foodTypeRandom < 0.15f -> FoodType.SPEED_UP     // 5% вероятность
-                foodTypeRandom < 0.2f -> FoodType.SLOW_DOWN     // 5% вероятность
-                else -> FoodType.REGULAR                        // 80% вероятность
+                foodTypeRandom < specialFoodFrequency -> FoodType.DOUBLE_SCORE
+                foodTypeRandom < specialFoodFrequency * 2 -> FoodType.SPEED_BOOST
+                foodTypeRandom < specialFoodFrequency * 3 -> FoodType.SPEED_UP
+                foodTypeRandom < specialFoodFrequency * 4 -> FoodType.SLOW_DOWN
+                else -> FoodType.REGULAR
             }
 
             return Food(position, foodType)
@@ -362,7 +387,7 @@ class GameStoreFactory(
 
         private fun generateObstacles(snake: List<GridPosition>, food: Food): List<Obstacle> {
             val obstacles = mutableListOf<Obstacle>()
-            val obstacleCount = 5 // Начинаем с 5 препятствий
+            val obstacleCount = Random.nextInt(1, maxObstacles + 1) // Количество препятствий зависит от сложности
 
             // Создаем случайные препятствия
             while (obstacles.size < obstacleCount) {
@@ -430,6 +455,7 @@ class GameStoreFactory(
         ) : Result
         data class SpeedFactorChanged(val speedFactor: Float) : Result
         data class DoubleScoreChanged(val active: Boolean) : Result
+        data class SwipeSensitivityChanged(val sensitivity: Float) : Result
         object StartDeathAnimation : Result
         object DeathAnimationComplete : Result
         data class ShowInstructions(val show: Boolean) : Result
@@ -461,6 +487,7 @@ class GameStoreFactory(
                 )
                 is Result.SpeedFactorChanged -> copy(speedFactor = result.speedFactor)
                 is Result.DoubleScoreChanged -> copy(doubleScoreActive = result.active)
+                is Result.SwipeSensitivityChanged -> copy(swipeSensitivity = result.sensitivity)
                 is Result.StartDeathAnimation -> copy(deathAnimationActive = true)
                 is Result.DeathAnimationComplete -> copy(deathAnimationActive = false)
                 is Result.ShowInstructions -> copy(showInstructions = result.show)

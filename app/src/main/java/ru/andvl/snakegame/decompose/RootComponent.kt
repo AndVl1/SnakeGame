@@ -14,12 +14,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
+import ru.andvl.snakegame.data.AchievementRepository
+import ru.andvl.snakegame.data.GameReplay
 import ru.andvl.snakegame.data.PlayerScore
+import ru.andvl.snakegame.data.ReplayRepository
 import ru.andvl.snakegame.data.ScoreRepository
 import ru.andvl.snakegame.data.SettingsRepository
+import ru.andvl.snakegame.data.StatisticsRepository
+import ru.andvl.snakegame.decompose.achievements.AchievementComponent
 import ru.andvl.snakegame.decompose.game.GameComponent
 import ru.andvl.snakegame.decompose.leaderboard.LeaderboardComponent
+import ru.andvl.snakegame.decompose.replay.ReplayComponent
+import ru.andvl.snakegame.decompose.replayplayer.ReplayPlayerComponent
 import ru.andvl.snakegame.decompose.settings.SettingsComponent
+import ru.andvl.snakegame.decompose.statistics.StatisticsComponent
 import ru.andvl.snakegame.game.model.GameSettings
 
 /**
@@ -34,6 +42,9 @@ class RootComponent(
     private val navigation = StackNavigation<Config>()
     private val scoreRepository = ScoreRepository(context)
     private val settingsRepository = SettingsRepository(context)
+    private val achievementRepository = AchievementRepository(context)
+    private val statisticsRepository = StatisticsRepository(context)
+    private val replayRepository = ReplayRepository(context)
     private val scope = CoroutineScope(Dispatchers.Main)
 
     // Состояние настроек для применения темы
@@ -57,6 +68,10 @@ class RootComponent(
         object Leaderboard : Config()
         object Game : Config()
         object Settings : Config()
+        object Achievements : Config()
+        object Statistics : Config()
+        object Replays : Config()
+        data class ReplayPlayer(val replayId: String) : Config()
     }
 
     /**
@@ -66,6 +81,10 @@ class RootComponent(
         data class Leaderboard(val component: LeaderboardComponent) : Child()
         data class Game(val component: GameComponent) : Child()
         data class Settings(val component: SettingsComponent) : Child()
+        data class Achievements(val component: AchievementComponent) : Child()
+        data class Statistics(val component: StatisticsComponent) : Child()
+        data class Replays(val component: ReplayComponent) : Child()
+        data class ReplayPlayer(val component: ReplayPlayerComponent) : Child()
     }
 
     private fun createChild(config: Config, componentContext: ComponentContext): Child =
@@ -76,13 +95,17 @@ class RootComponent(
                     scoreRepository = scoreRepository,
                     storeFactory = storeFactory,
                     onStartGameClick = { navigation.push(Config.Game) },
-                    onSettingsClick = { navigation.push(Config.Settings) }
+                    onSettingsClick = { navigation.push(Config.Settings) },
+                    onAchievementsClick = { navigation.push(Config.Achievements) },
+                    onStatisticsClick = { navigation.push(Config.Statistics) },
+                    onReplaysClick = { navigation.push(Config.Replays) }
                 )
             )
             is Config.Game -> Child.Game(
                 component = GameComponent(
                     componentContext = componentContext,
                     storeFactory = storeFactory,
+                    settingsRepository = settingsRepository,
                     onNavigateToLeaderboard = { score, speedFactor, playerName ->
                         if (playerName != null) {
                             saveScore(playerName, score, speedFactor)
@@ -114,6 +137,40 @@ class RootComponent(
                     storeFactory = storeFactory,
                     onNavigateBack = { navigation.pop() },
                     context = context
+                )
+            )
+            is Config.Achievements -> Child.Achievements(
+                component = AchievementComponent(
+                    componentContext = componentContext,
+                    achievementRepository = achievementRepository,
+                    storeFactory = storeFactory,
+                    onNavigateBack = { navigation.pop() }
+                )
+            )
+            is Config.Statistics -> Child.Statistics(
+                component = StatisticsComponent(
+                    componentContext = componentContext,
+                    statisticsRepository = statisticsRepository,
+                    storeFactory = storeFactory,
+                    onNavigateBack = { navigation.pop() }
+                )
+            )
+            is Config.Replays -> Child.Replays(
+                component = ReplayComponent(
+                    componentContext = componentContext,
+                    replayRepository = replayRepository,
+                    storeFactory = storeFactory,
+                    onWatchReplay = { replayId -> navigation.push(Config.ReplayPlayer(replayId)) },
+                    onNavigateBack = { navigation.pop() }
+                )
+            )
+            is Config.ReplayPlayer -> Child.ReplayPlayer(
+                component = ReplayPlayerComponent(
+                    componentContext = componentContext,
+                    replayId = config.replayId,
+                    replayRepository = replayRepository,
+                    storeFactory = storeFactory,
+                    onNavigateBack = { navigation.pop() }
                 )
             )
         }

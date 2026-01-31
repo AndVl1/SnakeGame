@@ -18,8 +18,13 @@ appcompat = "1.6.1"
 coroutinesTest = "1.7.3"
 mockk = "1.13.8"
 kotlinReflect = "1.9.0"
+screenshotValidationApi = "0.0.1-alpha10"
 tracer = "1.0.4"
 appMetrica = "7.7.0"
+ultron = "2.5.6"
+
+preview-screenshot="0.0.1-alpha10"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -59,12 +64,18 @@ mvikotlin-timetravel = { group = "com.arkivanov.mvikotlin", name = "mvikotlin-ti
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlinReflect" }
+screenshot-validation-api = { module = "com.android.tools.screenshot:screenshot-validation-api", version.ref = "screenshotValidationApi" }
+ultron-android = { group = "com.atiurin", name = "ultron-android", version.ref = "ultron" }
+ultron-compose = { group = "com.atiurin", name = "ultron-compose", version.ref = "ultron" }
+ultron-allure = { group = "com.atiurin", name = "ultron-allure", version.ref = "ultron" }
 
 # Аналитика
 appTracer-bom = { group = "ru.ok.tracer", name = "tracer-platform", version.ref = "tracer" }
 appTracer-crashes = { group = "ru.ok.tracer", name = "tracer-crash-report" }
 appTracer-disk-usage = { group = "ru.ok.tracer", name = "tracer-disk-usage" }
 appMetrica-analytics = { group = "io.appmetrica.analytics", name = "analytics", version.ref = "appMetrica" }
+
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -73,6 +84,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 appTracer = { id = "ru.ok.tracer", version.ref = "tracer" }
+screenshot = { id = "com.android.compose.screenshot", version.ref = "preview-screenshot"}
 
 [bundles]
 appTracer-bom = ["appTracer-crashes", "appTracer-disk-usage"]

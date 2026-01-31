@@ -62,6 +62,6 @@ fun <T : Any> StateFlow<T>.asValue(lifecycle: Lifecycle? = null): Value<T> {
  * Функция расширения для конвертации Store в Value из Decompose
  * с поддержкой отмены при уничтожении жизненного цикла
  */
-fun <Intent, State : Any, Label> Store<Intent, State, Label>.asValue(lifecycle: Lifecycle? = null): Value<State> {
+fun <Intent : Any, State : Any, Label : Any> Store<Intent, State, Label>.asValue(lifecycle: Lifecycle? = null): Value<State> {
     return stateFlow.asValue(lifecycle)
 }

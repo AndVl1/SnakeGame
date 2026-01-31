@@ -35,9 +35,11 @@ class NavigationTest {
     // Функции для навигации в тестах
     private var gameNavigationCounter = 0
     private var settingsNavigationCounter = 0
-    
+    private var achievementsNavigationCounter = 0
+
     private val onStartGameClick: () -> Unit = { gameNavigationCounter++ }
     private val onSettingsClick: () -> Unit = { settingsNavigationCounter++ }
+    private val onAchievementsClick: () -> Unit = { achievementsNavigationCounter++ }
     
     @Before
     fun setup() {
@@ -46,6 +48,7 @@ class NavigationTest {
         // Сбрасываем счетчики перед каждым тестом
         gameNavigationCounter = 0
         settingsNavigationCounter = 0
+        achievementsNavigationCounter = 0
         
         // Создаем моки необходимых зависимостей
         scoreRepository = mockk(relaxed = true)
@@ -75,7 +78,8 @@ class NavigationTest {
             scoreRepository = scoreRepository,
             storeFactory = storeFactory,
             onStartGameClick = onStartGameClick,
-            onSettingsClick = onSettingsClick
+            onSettingsClick = onSettingsClick,
+            onAchievementsClick = onAchievementsClick
         )
         
         // Запускаем обработку корутин, чтобы обработать init-блок компонента
@@ -108,7 +112,8 @@ class NavigationTest {
             scoreRepository = scoreRepository,
             storeFactory = storeFactory,
             onStartGameClick = onStartGameClick,
-            onSettingsClick = onSettingsClick
+            onSettingsClick = onSettingsClick,
+            onAchievementsClick = onAchievementsClick
         )
         
         // Запускаем обработку корутин для инициализации

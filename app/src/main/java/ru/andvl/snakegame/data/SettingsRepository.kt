@@ -30,7 +30,8 @@ class SettingsRepository(private val context: Context) {
             initialSpeedFactor = preferences[GameSettings.INITIAL_SPEED_KEY] ?: GameSettings().initialSpeedFactor,
             maxObstacles = preferences[GameSettings.MAX_OBSTACLES_KEY] ?: GameSettings().maxObstacles,
             specialFoodFrequency = preferences[GameSettings.SPECIAL_FOOD_FREQUENCY_KEY] ?: GameSettings().specialFoodFrequency,
-            appLocale = preferences[GameSettings.APP_LOCALE_KEY] ?: GameSettings().appLocale
+            appLocale = preferences[GameSettings.APP_LOCALE_KEY] ?: GameSettings().appLocale,
+            swipeSensitivity = preferences[GameSettings.SWIPE_SENSITIVITY_KEY] ?: GameSettings().swipeSensitivity
         )
     }
 
@@ -48,6 +49,7 @@ class SettingsRepository(private val context: Context) {
             preferences[GameSettings.MAX_OBSTACLES_KEY] = gameSettings.maxObstacles
             preferences[GameSettings.SPECIAL_FOOD_FREQUENCY_KEY] = gameSettings.specialFoodFrequency
             preferences[GameSettings.APP_LOCALE_KEY] = gameSettings.appLocale
+            preferences[GameSettings.SWIPE_SENSITIVITY_KEY] = gameSettings.swipeSensitivity
         }
     }
 
