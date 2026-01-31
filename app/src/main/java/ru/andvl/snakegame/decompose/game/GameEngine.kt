@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import ru.andvl.snakegame.data.Move
+import ru.andvl.snakegame.data.GameReplay
 import ru.andvl.snakegame.game.model.Direction
 import ru.andvl.snakegame.game.model.Food
 import ru.andvl.snakegame.game.model.FoodType
@@ -35,7 +37,16 @@ data class GameUiState(
  */
 class GameEngine(
     private val onStateChanged: (GameState) -> Unit,
-    private val onUiStateChanged: (GameUiState) -> Unit
+    private val onUiStateChanged: (GameUiState) -> Unit,
+    private val onGameFinished: (
+        score: Int,
+        snakeLength: Int,
+        speedFactor: Float,
+        gameTimeSeconds: Long,
+        regularFoodCount: Int,
+        specialFoodCount: Int
+    ) -> Unit = { _, _, _, _, _, _ -> },
+    private val onReplaySaved: (GameReplay) -> Unit = { _ -> }
 ) {
 
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -76,6 +87,14 @@ class GameEngine(
     private var deathAnimationActive = false
     private var showInstructions = true
 
+    // Статистика игры
+    private var gameStartTime: Long = 0L
+    private var regularFoodEatenInGame = 0
+    private var specialFoodEatenInGame = 0
+
+    // Запись реплея
+    private val recordedMoves = mutableListOf<Move>()
+
     /**
      * Инициализация движка
      */
@@ -89,6 +108,7 @@ class GameEngine(
     fun startGame() {
         if (gameState != GameState.Running) {
             gameState = GameState.Running
+            gameStartTime = System.currentTimeMillis()
             onStateChanged(gameState)
             startGameLoop()
         }
@@ -116,6 +136,14 @@ class GameEngine(
         doubleScoreActive = false
         pulsatingSpeedActive = false
         deathAnimationActive = false
+
+        // Сбрасываем статистику игры
+        gameStartTime = 0L
+        regularFoodEatenInGame = 0
+        specialFoodEatenInGame = 0
+
+        // Очищаем записанные движения
+        recordedMoves.clear()
 
         // Создаем змейку в центре экрана
         val centerY = boardSize / 2
@@ -161,12 +189,19 @@ class GameEngine(
      */
     fun changeDirection(direction: Direction) {
         // Предотвращаем движение в противоположную сторону
-        nextDirection = when(direction) {
+        val newDirection = when(direction) {
             Direction.UP -> if (currentDirection != Direction.DOWN) direction else currentDirection
             Direction.DOWN -> if (currentDirection != Direction.UP) direction else currentDirection
             Direction.LEFT -> if (currentDirection != Direction.RIGHT) direction else currentDirection
             Direction.RIGHT -> if (currentDirection != Direction.LEFT) direction else currentDirection
         }
+
+        // Записываем изменение направления, если оно действительно изменилось
+        if (newDirection != nextDirection && gameState == GameState.Running) {
+            recordedMoves.add(Move(newDirection, System.currentTimeMillis() - gameStartTime))
+        }
+
+        nextDirection = newDirection
     }
 
     /**
@@ -311,6 +346,13 @@ class GameEngine(
         val points = if (doubleScoreActive) 2 else 1
         score += points
 
+        // Обновляем статистику еды
+        if (food.type == FoodType.REGULAR) {
+            regularFoodEatenInGame++
+        } else {
+            specialFoodEatenInGame++
+        }
+
         // Обрабатываем логику увеличения скорости для обычных точек
         if (food.type == FoodType.REGULAR) {
             // Увеличиваем счетчик съеденных точек
@@ -438,6 +480,36 @@ class GameEngine(
     private fun gameOver() {
         gameState = GameState.GameOver
         gameUpdateJob?.cancel()
+
+        // Вычисляем длительность игры
+        val gameTimeSeconds = if (gameStartTime > 0) {
+            (System.currentTimeMillis() - gameStartTime) / 1000
+        } else {
+            0L
+        }
+
+        // Создаем и сохраняем реплей
+        if (recordedMoves.isNotEmpty()) {
+            val replay = GameReplay(
+                timestamp = System.currentTimeMillis(),
+                finalScore = score,
+                maxSpeed = speedFactor,
+                snakeLength = snakeParts.size,
+                moves = recordedMoves.toList(),
+                durationSeconds = gameTimeSeconds
+            )
+            onReplaySaved(replay)
+        }
+
+        // Уведомляем о завершении игры со статистикой
+        onGameFinished(
+            score,
+            snakeParts.size,
+            speedFactor,
+            gameTimeSeconds,
+            regularFoodEatenInGame,
+            specialFoodEatenInGame
+        )
 
         // Явно уведомляем колбэк о смене состояния перед запуском анимации
         onStateChanged(gameState)

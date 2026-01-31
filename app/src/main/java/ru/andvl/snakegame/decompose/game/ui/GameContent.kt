@@ -7,8 +7,15 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -21,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,6 +44,7 @@ import ru.andvl.snakegame.game.ui.GameBoard
 import ru.andvl.snakegame.game.ui.GameDirectionControls
 import ru.andvl.snakegame.game.ui.GameInstructionsDialog
 import ru.andvl.snakegame.game.ui.InfoPanel
+import ru.andvl.snakegame.main.TestTags
 import ru.andvl.snakegame.ui.SaveScoreDialog
 
 /**
@@ -83,7 +92,9 @@ fun GameContent(
     }
 
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(TestTags.GAME_SCREEN),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -105,7 +116,9 @@ fun GameContent(
             InfoPanel(
                 score = state.score,
                 speedFactor = state.speedFactor,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.GAME_SCORE)
             )
 
             FoodLegend(
@@ -128,6 +141,7 @@ fun GameContent(
                     isGameOver = state.deathAnimationActive,
                     doubleScoreActive = state.doubleScoreActive,
                     pulsatingSpeedActive = state.pulsatingSpeedActive,
+                    swipeSensitivity = state.swipeSensitivity,
                     onDirectionChange = {
                         component.onDirectionChange(GameModelConverter.convertDirection(it))
                     },
@@ -135,13 +149,40 @@ fun GameContent(
                         .widthIn(max = maxBoardSize)
                         .aspectRatio(1f)
                 )
+
+                // Floating pause/play button (показывается только во время игры или паузы)
+                if (state.gameState == GameState.Running || state.gameState == GameState.Paused) {
+                    FloatingActionButton(
+                        onClick = component::onPlayPauseClick,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(16.dp)
+                            .size(56.dp),
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Icon(
+                            imageVector = if (state.gameState == GameState.Running)
+                                Icons.Default.Pause
+                            else
+                                Icons.Default.PlayArrow,
+                            contentDescription = if (state.gameState == GameState.Running)
+                                stringResource(R.string.pause_game)
+                            else
+                                stringResource(R.string.resume_game),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
             }
 
             // Элементы управления
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 8.dp)
+                    .testTag(TestTags.GAME_CONTROLS),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 GameDirectionControls(

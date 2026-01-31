@@ -19,7 +19,11 @@ import ru.andvl.snakegame.game.model.GameSettings
 sealed interface SettingsIntent {
     object LoadSettings : SettingsIntent
     object ToggleTheme : SettingsIntent
+    object ToggleSounds : SettingsIntent
+    object ToggleVibrations : SettingsIntent
     data class SelectLocale(val localeCode: String) : SettingsIntent
+    data class SelectDifficulty(val difficulty: Int) : SettingsIntent
+    data class SelectSwipeSensitivity(val sensitivity: Float) : SettingsIntent
     object ClickBack : SettingsIntent
 }
 
@@ -28,7 +32,11 @@ sealed interface SettingsIntent {
  */
 data class SettingsState(
     val isDarkTheme: Boolean = false,
+    val soundsEnabled: Boolean = true,
+    val vibrationsEnabled: Boolean = true,
     val appLocale: String = "",
+    val difficulty: Int = 3,
+    val swipeSensitivity: Float = 1.0f,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -85,7 +93,11 @@ class SettingsStoreFactory(
             when (intent) {
                 is SettingsIntent.LoadSettings -> loadSettings()
                 is SettingsIntent.ToggleTheme -> toggleTheme()
+                is SettingsIntent.ToggleSounds -> toggleSounds()
+                is SettingsIntent.ToggleVibrations -> toggleVibrations()
                 is SettingsIntent.SelectLocale -> selectLocale(intent.localeCode)
+                is SettingsIntent.SelectDifficulty -> selectDifficulty(intent.difficulty)
+                is SettingsIntent.SelectSwipeSensitivity -> selectSwipeSensitivity(intent.sensitivity)
                 is SettingsIntent.ClickBack -> publish(SettingsLabel.NavigateBack)
             }
         }
@@ -127,17 +139,105 @@ class SettingsStoreFactory(
             }
         }
         
+        private fun toggleSounds() {
+            scope.launch {
+                try {
+                    val currentSettings = withContext(Dispatchers.IO) {
+                        settingsRepository.settings.firstOrNull() ?: GameSettings()
+                    }
+
+                    val updatedSettings = currentSettings.copy(
+                        soundsEnabled = !currentSettings.soundsEnabled
+                    )
+
+                    withContext(Dispatchers.IO) {
+                        settingsRepository.updateSettings(updatedSettings)
+                    }
+
+                    dispatch(Result.SoundsToggled(updatedSettings.soundsEnabled))
+                } catch (e: Exception) {
+                    dispatch(Result.Error(e.message ?: "Ошибка при изменении звуков"))
+                }
+            }
+        }
+
+        private fun toggleVibrations() {
+            scope.launch {
+                try {
+                    val currentSettings = withContext(Dispatchers.IO) {
+                        settingsRepository.settings.firstOrNull() ?: GameSettings()
+                    }
+
+                    val updatedSettings = currentSettings.copy(
+                        vibrationsEnabled = !currentSettings.vibrationsEnabled
+                    )
+
+                    withContext(Dispatchers.IO) {
+                        settingsRepository.updateSettings(updatedSettings)
+                    }
+
+                    dispatch(Result.VibrationsToggled(updatedSettings.vibrationsEnabled))
+                } catch (e: Exception) {
+                    dispatch(Result.Error(e.message ?: "Ошибка при изменении вибраций"))
+                }
+            }
+        }
+
         private fun selectLocale(localeCode: String) {
             scope.launch {
                 try {
                     withContext(Dispatchers.IO) {
                         settingsRepository.updateAppLocale(localeCode)
                     }
-                    
+
                     dispatch(Result.LocaleSelected(localeCode))
                     publish(SettingsLabel.ShowMessage("Язык будет изменен при следующем запуске"))
                 } catch (e: Exception) {
                     dispatch(Result.Error(e.message ?: "Ошибка при изменении языка"))
+                }
+            }
+        }
+
+        private fun selectDifficulty(difficulty: Int) {
+            scope.launch {
+                try {
+                    val currentSettings = withContext(Dispatchers.IO) {
+                        settingsRepository.settings.firstOrNull() ?: GameSettings()
+                    }
+
+                    val updatedSettings = currentSettings.copy(
+                        difficulty = difficulty
+                    )
+
+                    withContext(Dispatchers.IO) {
+                        settingsRepository.updateSettings(updatedSettings)
+                    }
+
+                    dispatch(Result.DifficultySelected(difficulty))
+                } catch (e: Exception) {
+                    dispatch(Result.Error(e.message ?: "Ошибка при изменении сложности"))
+                }
+            }
+        }
+
+        private fun selectSwipeSensitivity(sensitivity: Float) {
+            scope.launch {
+                try {
+                    val currentSettings = withContext(Dispatchers.IO) {
+                        settingsRepository.settings.firstOrNull() ?: GameSettings()
+                    }
+
+                    val updatedSettings = currentSettings.copy(
+                        swipeSensitivity = sensitivity
+                    )
+
+                    withContext(Dispatchers.IO) {
+                        settingsRepository.updateSettings(updatedSettings)
+                    }
+
+                    dispatch(Result.SwipeSensitivitySelected(sensitivity))
+                } catch (e: Exception) {
+                    dispatch(Result.Error(e.message ?: "Ошибка при изменении чувствительности свайпов"))
                 }
             }
         }
@@ -150,7 +250,11 @@ class SettingsStoreFactory(
         object Loading : Result
         data class SettingsLoaded(val settings: GameSettings) : Result
         data class ThemeToggled(val isDarkTheme: Boolean) : Result
+        data class SoundsToggled(val soundsEnabled: Boolean) : Result
+        data class VibrationsToggled(val vibrationsEnabled: Boolean) : Result
         data class LocaleSelected(val localeCode: String) : Result
+        data class DifficultySelected(val difficulty: Int) : Result
+        data class SwipeSensitivitySelected(val sensitivity: Float) : Result
         data class Error(val message: String) : Result
     }
     
@@ -163,12 +267,20 @@ class SettingsStoreFactory(
                 is Result.Loading -> copy(isLoading = true, error = null)
                 is Result.SettingsLoaded -> copy(
                     isDarkTheme = result.settings.isDarkTheme,
+                    soundsEnabled = result.settings.soundsEnabled,
+                    vibrationsEnabled = result.settings.vibrationsEnabled,
                     appLocale = result.settings.appLocale,
+                    difficulty = result.settings.difficulty,
+                    swipeSensitivity = result.settings.swipeSensitivity,
                     isLoading = false,
                     error = null
                 )
                 is Result.ThemeToggled -> copy(isDarkTheme = result.isDarkTheme, isLoading = false, error = null)
+                is Result.SoundsToggled -> copy(soundsEnabled = result.soundsEnabled, isLoading = false, error = null)
+                is Result.VibrationsToggled -> copy(vibrationsEnabled = result.vibrationsEnabled, isLoading = false, error = null)
                 is Result.LocaleSelected -> copy(appLocale = result.localeCode, isLoading = false, error = null)
+                is Result.DifficultySelected -> copy(difficulty = result.difficulty, isLoading = false, error = null)
+                is Result.SwipeSensitivitySelected -> copy(swipeSensitivity = result.sensitivity, isLoading = false, error = null)
                 is Result.Error -> copy(isLoading = false, error = result.message)
             }
     }

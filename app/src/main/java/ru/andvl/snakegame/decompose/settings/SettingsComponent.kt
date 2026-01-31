@@ -44,7 +44,11 @@ class SettingsComponent(
     val state: Value<State> = store.asValue({ storeState ->
         State(
             isDarkTheme = storeState.isDarkTheme,
+            soundsEnabled = storeState.soundsEnabled,
+            vibrationsEnabled = storeState.vibrationsEnabled,
             appLocale = storeState.appLocale,
+            difficulty = storeState.difficulty,
+            swipeSensitivity = storeState.swipeSensitivity,
             isLoading = storeState.isLoading,
             error = storeState.error
         )
@@ -81,13 +85,33 @@ class SettingsComponent(
         store.accept(SettingsIntent.ToggleTheme)
     }
 
+    fun onSoundsToggled() {
+        store.accept(SettingsIntent.ToggleSounds)
+    }
+
+    fun onVibrationsToggled() {
+        store.accept(SettingsIntent.ToggleVibrations)
+    }
+
     fun onAppLocaleSelected(localeCode: String) {
         store.accept(SettingsIntent.SelectLocale(localeCode))
     }
 
+    fun onDifficultySelected(difficulty: Int) {
+        store.accept(SettingsIntent.SelectDifficulty(difficulty))
+    }
+
+    fun onSwipeSensitivitySelected(sensitivity: Float) {
+        store.accept(SettingsIntent.SelectSwipeSensitivity(sensitivity))
+    }
+
     data class State(
         val isDarkTheme: Boolean = false,
+        val soundsEnabled: Boolean = true,
+        val vibrationsEnabled: Boolean = true,
         val appLocale: String = "",
+        val difficulty: Int = 3,
+        val swipeSensitivity: Float = 1.0f,
         val isLoading: Boolean = false,
         val error: String? = null
     )
