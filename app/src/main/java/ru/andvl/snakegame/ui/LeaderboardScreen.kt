@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -37,6 +38,7 @@ fun LeaderboardScreen(
     onStartGameClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onAchievementsClick: () -> Unit,
+    onStatisticsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -196,21 +198,39 @@ fun LeaderboardScreen(
                 }
 
                 Button(
-                    onClick = onSettingsClick,
+                    onClick = onStatisticsClick,
                     modifier = Modifier
                         .weight(1f)
-                        .testTag("SettingsButton")
+                        .testTag("StatisticsButton")
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Settings,
+                            imageVector = Icons.Default.BarChart,
                             contentDescription = null
                         )
-                        Text(text = stringResource(R.string.settings_button))
+                        Text(text = stringResource(R.string.statistics_button))
                     }
+                }
+            }
+
+            Button(
+                onClick = onSettingsClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("SettingsButton")
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null
+                    )
+                    Text(text = stringResource(R.string.settings_button))
                 }
             }
         }
