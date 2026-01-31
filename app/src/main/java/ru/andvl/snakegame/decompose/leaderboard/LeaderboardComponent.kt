@@ -28,7 +28,9 @@ class LeaderboardComponent(
     private val scoreRepository: ScoreRepository,
     private val storeFactory: StoreFactory,
     private val onStartGameClick: () -> Unit,
-    private val onSettingsClick: () -> Unit
+    private val onSettingsClick: () -> Unit,
+    private val onAchievementsClick: () -> Unit,
+    private val onStatisticsClick: () -> Unit = {}
 ) : ComponentContext by componentContext {
 
     // Используем SupervisorJob для устойчивости к ошибкам в корутинах
@@ -58,6 +60,12 @@ class LeaderboardComponent(
                     }
                     LeaderboardLabel.NavigateToSettings -> {
                         onSettingsClick.invoke()
+                    }
+                    LeaderboardLabel.NavigateToAchievements -> {
+                        onAchievementsClick.invoke()
+                    }
+                    LeaderboardLabel.NavigateToStatistics -> {
+                        onStatisticsClick.invoke()
                     }
                 }
             }
@@ -89,6 +97,14 @@ class LeaderboardComponent(
 
     fun onSettingsClick() {
         store.accept(LeaderboardIntent.OpenSettings)
+    }
+
+    fun onAchievementsClick() {
+        store.accept(LeaderboardIntent.OpenAchievements)
+    }
+
+    fun onStatisticsClick() {
+        store.accept(LeaderboardIntent.OpenStatistics)
     }
 
     // Публичный метод для явного обновления данных лидерборда, который можно вызвать извне

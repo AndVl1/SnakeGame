@@ -14,9 +14,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
+import ru.andvl.snakegame.data.AchievementRepository
 import ru.andvl.snakegame.data.PlayerScore
 import ru.andvl.snakegame.data.ScoreRepository
 import ru.andvl.snakegame.data.SettingsRepository
+import ru.andvl.snakegame.decompose.achievements.AchievementComponent
 import ru.andvl.snakegame.decompose.game.GameComponent
 import ru.andvl.snakegame.decompose.leaderboard.LeaderboardComponent
 import ru.andvl.snakegame.decompose.settings.SettingsComponent
@@ -34,6 +36,8 @@ class RootComponent(
     private val navigation = StackNavigation<Config>()
     private val scoreRepository = ScoreRepository(context)
     private val settingsRepository = SettingsRepository(context)
+    private val achievementRepository = AchievementRepository(context)
+    private val statisticsRepository = ru.andvl.snakegame.data.StatisticsRepository(context)
     private val scope = CoroutineScope(Dispatchers.Main)
 
     // Состояние настроек для применения темы
@@ -57,6 +61,8 @@ class RootComponent(
         object Leaderboard : Config()
         object Game : Config()
         object Settings : Config()
+        object Achievements : Config()
+        object Statistics : Config()
     }
 
     /**
@@ -66,6 +72,8 @@ class RootComponent(
         data class Leaderboard(val component: LeaderboardComponent) : Child()
         data class Game(val component: GameComponent) : Child()
         data class Settings(val component: SettingsComponent) : Child()
+        data class Achievements(val component: AchievementComponent) : Child()
+        data class Statistics(val component: ru.andvl.snakegame.decompose.statistics.StatisticsComponent) : Child()
     }
 
     private fun createChild(config: Config, componentContext: ComponentContext): Child =
@@ -76,13 +84,16 @@ class RootComponent(
                     scoreRepository = scoreRepository,
                     storeFactory = storeFactory,
                     onStartGameClick = { navigation.push(Config.Game) },
-                    onSettingsClick = { navigation.push(Config.Settings) }
+                    onSettingsClick = { navigation.push(Config.Settings) },
+                    onAchievementsClick = { navigation.push(Config.Achievements) },
+                    onStatisticsClick = { navigation.push(Config.Statistics) }
                 )
             )
             is Config.Game -> Child.Game(
                 component = GameComponent(
                     componentContext = componentContext,
                     storeFactory = storeFactory,
+                    settingsRepository = settingsRepository,
                     onNavigateToLeaderboard = { score, speedFactor, playerName ->
                         if (playerName != null) {
                             saveScore(playerName, score, speedFactor)
@@ -114,6 +125,22 @@ class RootComponent(
                     storeFactory = storeFactory,
                     onNavigateBack = { navigation.pop() },
                     context = context
+                )
+            )
+            is Config.Achievements -> Child.Achievements(
+                component = AchievementComponent(
+                    componentContext = componentContext,
+                    achievementRepository = achievementRepository,
+                    storeFactory = storeFactory,
+                    onNavigateBack = { navigation.pop() }
+                )
+            )
+            is Config.Statistics -> Child.Statistics(
+                component = ru.andvl.snakegame.decompose.statistics.StatisticsComponent(
+                    componentContext = componentContext,
+                    statisticsRepository = statisticsRepository,
+                    storeFactory = storeFactory,
+                    onNavigateBack = { navigation.pop() }
                 )
             )
         }

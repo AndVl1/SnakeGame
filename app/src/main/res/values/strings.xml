@@ -84,7 +84,13 @@
     <string name="sound_effects_description">Play sounds during gameplay</string>
     <string name="haptic_feedback">Haptic Feedback</string>
     <string name="haptic_feedback_description">Enable vibration feedback</string>
-    
+    <string name="swipe_sensitivity">Swipe Sensitivity</string>
+    <string name="swipe_sensitivity_description">Adjust gesture sensitivity</string>
+    <string name="sensitivity_low">Low</string>
+    <string name="sensitivity_medium">Medium</string>
+    <string name="sensitivity_high">High</string>
+    <string name="sensitivity_very_high">Very High</string>
+
     <!-- Leaderboard screen -->
     <string name="leaderboard_title">Leaderboard</string>
     <string name="no_records">No records yet</string>
@@ -94,4 +100,46 @@
     <string name="speed_column">Speed</string>
     <string name="play_button">Play</string>
     <string name="settings_button">Settings</string>
+    <string name="achievements_button">Achievements</string>
+
+    <!-- Achievements screen -->
+    <string name="achievements_title">Achievements</string>
+    <string name="unlocked_on">Unlocked on %1$s</string>
+
+    <!-- Statistics screen -->
+    <string name="statistics_title">Statistics</string>
+    <string name="statistics_button">Statistics</string>
+    <string name="general_statistics">General</string>
+    <string name="games_played">Games Played</string>
+    <string name="total_score">Total Score</string>
+    <string name="total_play_time">Total Play Time</string>
+    <string name="records_section">Records</string>
+    <string name="highest_score">Highest Score</string>
+    <string name="longest_snake">Longest Snake</string>
+    <string name="fastest_speed">Fastest Speed</string>
+    <string name="food_statistics">Food</string>
+    <string name="regular_food_eaten">Regular Food</string>
+    <string name="special_food_eaten">Special Food</string>
+    <string name="total_food_eaten">Total Food</string>
+    <string name="averages_section">Averages</string>
+    <string name="average_game_duration">Avg Game Duration</string>
+    <string name="average_score">Average Score</string>
+    <string name="reset_statistics">Reset Statistics</string>
+    <string name="reset_statistics_title">Reset All Statistics?</string>
+    <string name="reset_statistics_message">This will permanently delete all your statistics. This action cannot be undone.</string>
+    <string name="reset">Reset</string>
+
+    <!-- Difficulty levels -->
+    <string name="difficulty_level">Difficulty Level</string>
+    <string name="difficulty_level_description">Adjust game speed, obstacles, and special food frequency</string>
+    <string name="difficulty_very_easy">Very Easy</string>
+    <string name="difficulty_very_easy_desc">Slow pace, few obstacles</string>
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_easy_desc">Relaxed gameplay</string>
+    <string name="difficulty_medium">Medium</string>
+    <string name="difficulty_medium_desc">Balanced experience</string>
+    <string name="difficulty_hard">Hard</string>
+    <string name="difficulty_hard_desc">Fast and challenging</string>
+    <string name="difficulty_very_hard">Very Hard</string>
+    <string name="difficulty_very_hard_desc">Expert only</string>
 </resources>

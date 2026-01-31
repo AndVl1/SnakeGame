@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -34,6 +36,7 @@ fun LeaderboardScreen(
     scores: List<PlayerScore>,
     onStartGameClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onAchievementsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -50,7 +53,7 @@ fun LeaderboardScreen(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
-        
+
         // Таблица рекордов
         Card(
             modifier = Modifier.weight(1f)
@@ -60,7 +63,8 @@ fun LeaderboardScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp),
+                        .padding(16.dp)
+                        .testTag("NoRecordsContent"),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -78,7 +82,10 @@ fun LeaderboardScreen(
                 }
             } else {
                 // Заголовок таблицы
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                        .testTag("RecordsContent")
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -106,7 +113,7 @@ fun LeaderboardScreen(
                             textAlign = TextAlign.End
                         )
                     }
-                    
+
                     // Список рекордов
                     LazyColumn(
                         modifier = Modifier.fillMaxWidth()
@@ -142,15 +149,17 @@ fun LeaderboardScreen(
                 }
             }
         }
-        
+
         // Кнопки действий
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
                 onClick = onStartGameClick,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("PlayButton")
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -163,22 +172,45 @@ fun LeaderboardScreen(
                     Text(text = stringResource(R.string.play_button))
                 }
             }
-            
-            Button(
-                onClick = onSettingsClick,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 8.dp)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Button(
+                    onClick = onAchievementsClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("AchievementsButton")
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = null
-                    )
-                    Text(text = stringResource(R.string.settings_button))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = null
+                        )
+                        Text(text = stringResource(R.string.achievements_button))
+                    }
+                }
+
+                Button(
+                    onClick = onSettingsClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("SettingsButton")
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = null
+                        )
+                        Text(text = stringResource(R.string.settings_button))
+                    }
                 }
             }
         }

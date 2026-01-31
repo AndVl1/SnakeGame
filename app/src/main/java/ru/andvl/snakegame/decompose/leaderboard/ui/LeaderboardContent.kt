@@ -21,6 +21,7 @@ fun LeaderboardContent(
         scores = state.topScores,
         onStartGameClick = { component.onStartGameClick() },
         onSettingsClick = { component.onSettingsClick() },
+        onAchievementsClick = { component.onAchievementsClick() },
         modifier = modifier
     )
 } 
