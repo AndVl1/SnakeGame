@@ -13,6 +13,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import ru.andvl.snakegame.data.SettingsRepository
 import ru.andvl.snakegame.decompose.game.store.GameIntent
 import ru.andvl.snakegame.decompose.game.store.GameLabel
 import ru.andvl.snakegame.decompose.game.store.GameState
@@ -26,6 +27,7 @@ import ru.andvl.snakegame.game.model.Direction
 class GameComponent(
     componentContext: ComponentContext,
     private val storeFactory: StoreFactory,
+    private val settingsRepository: SettingsRepository,
     private val onNavigateToLeaderboard: (score: Int, speedFactor: Float, playerName: String?) -> Unit,
     private val onBack: () -> Unit
 ) : ComponentContext by componentContext {
@@ -35,7 +37,7 @@ class GameComponent(
 
     // Создаем и сохраняем store в instanceKeeper
     private val store = instanceKeeper.getStore {
-        GameStoreFactory(storeFactory).create()
+        GameStoreFactory(storeFactory, settingsRepository).create()
     }
 
     // Экспонируем state как Value для Decompose с привязкой к lifecycle

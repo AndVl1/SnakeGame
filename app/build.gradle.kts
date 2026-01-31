@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.appTracer)
+    alias(libs.plugins.screenshot)
 }
 
 android {
@@ -25,6 +26,7 @@ android {
         // Добавляем BuildConfig поле для AppMetrica
         buildConfigField("String", "APP_METRICA_API_KEY", "\"${System.getenv("APP_METRICA_API_KEY") ?: gradleLocalProperties(rootDir, providers).getProperty("app_metrica_api_key")}\"")
     }
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     buildTypes {
         release {
@@ -59,25 +61,25 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
-    
+
     // AppCompat
     implementation(libs.androidx.appcompat)
-    
+
     // DataStore
     implementation(libs.androidx.datastore.preferences)
-    
+
     // Kotlinx Serialization
     implementation(libs.kotlinx.serialization.json)
-    
+
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
-    
+
     // Decompose
     implementation(libs.decompose)
     implementation(libs.decompose.compose.jetpack)
-    
+
     // MVIKotlin
     implementation(libs.mvikotlin)
     implementation(libs.mvikotlin.main)
@@ -95,13 +97,20 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlin.reflect)
-    
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.ultron.android)
+    androidTestImplementation(libs.ultron.compose)
+    androidTestImplementation(libs.ultron.allure)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    screenshotTestImplementation(libs.androidx.ui.tooling)
+    screenshotTestImplementation(libs.screenshot.validation.api)
+    // com.android.tools.screenshot:screenshot-validation-api:
 }
 
 tracer {
